@@ -18,9 +18,8 @@ app.use(session({
     saveUninitialized: true
 }));
 
-app.use("/libs", express.static("node_modules"));
-// YENİ HALİ (Böyle yap):
-app.use(express.static("public"));
+app.use("/libs", express.static(path.join(__dirname, "node_modules")));
+app.use("/static", express.static(path.join(__dirname, "public")));
 
 // Rotaları Aktif Et
 app.use(authRoutes); 
