@@ -25,6 +25,10 @@ app.use("/static", express.static("public"));
 app.use(authRoutes); 
 app.use(ihaleRoutes); 
 
-app.listen(3000, () => {
-    console.log("Sunucu çalışıyor: http://localhost:3000");
+// index.js dosyasının en altındaki kısmı böyle yap:
+
+const PORT = process.env.PORT || 3000; // Render bir port verirse onu kullan, yoksa 3000
+
+app.listen(PORT, () => {
+    console.log(`Sunucu çalışıyor port: ${PORT}`);
 });
