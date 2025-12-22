@@ -1,3 +1,4 @@
+const mysql = require('mysql2');
 const config = {
   db: {
     host: process.env.DB_HOST,
