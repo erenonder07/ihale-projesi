@@ -19,7 +19,8 @@ app.use(session({
 }));
 
 app.use("/libs", express.static("node_modules"));
-app.use("/static", express.static("public"));
+// YENİ HALİ (Böyle yap):
+app.use(express.static("public"));
 
 // Rotaları Aktif Et
 app.use(authRoutes); 
