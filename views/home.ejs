@@ -16,30 +16,36 @@
 
     <div class="container">
         
-
         <h3 class="mb-3">Aktif İhaleler</h3>
         
         <div class="row">
+    
     <% if (ihaleler.length === 0) { %>
-        <div class="alert alert-warning">Şu an açık bir ihale yok.</div>
+        <div class="col-12">
+            <div class="alert alert-warning">Şu an açık bir ihale yok.</div>
+        </div>
     <% } %>
 
     <% ihaleler.forEach(ihale => { %>
         <div class="col-md-4 mb-4">
             <div class="card h-100 border-0 shadow-sm">
+                
+                <% if (ihale.image_url) { %>
+                    <img src="/static/images/<%= ihale.image_url %>" class="card-img-top" alt="Ürün Resmi" style="height: 200px; object-fit: cover;">
+                <% } else { %>
+                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <span>Resim Yok</span>
+                    </div>
+                <% } %>
+
                 <div class="card-body">
                     <h5 class="card-title text-primary"><%= ihale.title %></h5>
-    <% if (ihale.image_url) { %>
-        <img src="/static/uploads/<%= ihale.image_url %>" class="card-img-top" alt="Ürün Resmi" style="height: 200px; object-fit: cover;">
-    <% } %>
-
-        <div class="card-body">
-        <h5 class="card-title"><%= ihale.title %></h5>
-    
-        <p class="card-text"><%- ihale.description %></p>                    
+                    
+                    <p class="card-text"><%- ihale.description %></p>                    
+                    
                     <hr>
+                    
                     <div class="d-flex justify-content-between align-items-center mb-2">
-    
                         <span class="fw-bold text-secondary">
                             <%= ihale.en_yuksek_teklif ? 'Güncel Fiyat:' : 'Açılış Fiyatı:' %>
                         </span>
@@ -47,8 +53,7 @@
                         <span class="badge bg-success fs-6">
                             <%= ihale.en_yuksek_teklif ? ihale.en_yuksek_teklif : ihale.start_price %> ₺
                         </span>
-
-</div>
+                    </div>
                 </div>
 
                 <div class="card-footer bg-white">
@@ -59,15 +64,18 @@
                         
                         <button type="submit" class="btn btn-sm btn-outline-primary">Ver</button>
                     </form>
+                    
                     <div class="text-end mt-2">
                         <small class="text-muted" style="font-size: 0.75rem;">Bitiş: <%= ihale.end_date %></small>
                     </div>
                 </div>
-                </div>
+
+            </div>
         </div>
     <% }) %>
-</div>
-
     
+        </div>
+    </div>
+
 </body>
 </html>
