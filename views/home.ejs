@@ -59,7 +59,9 @@
                 <a href="/dashboard" class="btn btn-outline-info btn-sm fw-semibold">
                     🎛️ Yönetim Paneli
                 </a>
-                <a href="/login" class="btn btn-outline-light btn-sm">Çıkış / Kayıt</a>
+                <a href="/logout" class="btn btn-outline-light btn-sm">
+                    Çıkış Yap
+                </a>
             </div>
         </div>
     </nav>
@@ -75,7 +77,8 @@
     <% if (ihaleler.length === 0) { %>
         <div class="col-12">
             <div class="alert alert-warning shadow-sm border-0">
-                ⚠️ Şu an açık bir ihale bulunmuyor. Lütfen daha sonra tekrar kontrol edin.
+                ⚠️ Şu an açık bir ihale bulunmuyor.
+                Lütfen daha sonra tekrar kontrol edin.
             </div>
         </div>
     <% } %>
@@ -175,7 +178,8 @@
                     timer.innerHTML = "SÜRE DOLDU";
                     timer.classList.remove('text-danger');
                     timer.classList.add('text-secondary');
-                    // Butonu gizle
+                    
+                    // Butonu gizle ve kapat
                     const card = timer.closest('.card');
                     const form = card.querySelector('form');
                     const badge = card.querySelector('.badge.bg-danger');
@@ -192,7 +196,6 @@
                     if (days > 0) {
                         timer.innerHTML = `${days}G ${hours}S ${minutes}D`;
                     } else {
-                        // Son 1 saat kaldıysa yanıp sönsün
                         if(hours === 0) {
                             timer.style.animation = "blink 1s infinite";
                         }
@@ -215,7 +218,7 @@
         forms.forEach(form => {
             form.addEventListener('submit', function() {
                 const btn = this.querySelector('.btn-bid');
-                btn.disabled = true; // Çift tıklamayı engelle
+                btn.disabled = true; 
                 btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
             });
         });

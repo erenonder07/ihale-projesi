@@ -33,7 +33,7 @@ router.post("/register", async function(req, res) {
     }
 });
 
-// 3. Giriş Yapma İşlemi (GÜNCELLENDİ)
+// 3. Giriş Yapma İşlemi
 router.post("/login", async function(req, res) {
     const email = req.body.email;
     const password = req.body.password;
@@ -50,8 +50,8 @@ router.post("/login", async function(req, res) {
             // -- GİRİŞ BAŞARILI --
             req.session.user_id = user.user_id; 
             req.session.ad_soyad = user.full_name;
-            req.session.email = user.email; // E-posta'yı kaydet
-            req.session.phone = user.phone; // YENİ: Telefonu da kaydet
+            req.session.email = user.email; 
+            req.session.phone = user.phone; // Telefonu da hafızaya alıyoruz
             
             console.log("Giriş Başarılı: " + user.full_name);
             res.redirect("/dashboard");
@@ -63,6 +63,20 @@ router.post("/login", async function(req, res) {
         console.log(err);
         res.send("Giriş Hatası: " + err.message);
     }
+});
+
+// 4. GÜVENLİ ÇIKIŞ İŞLEMİ (LOGOUT) - YENİ EKLENDİ
+router.get("/logout", function(req, res) {
+    // Oturumu tamamen yok et
+    req.session.destroy((err) => {
+        if (err) {
+            console.log(err);
+        }
+        // Çerezi de temizle
+        res.clearCookie('connect.sid'); 
+        // Giriş sayfasına gönder
+        res.redirect("/login");
+    });
 });
 
 module.exports = router;
