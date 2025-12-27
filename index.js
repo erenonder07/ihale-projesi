@@ -7,10 +7,11 @@ const session = require("express-session");
 const authRoutes = require("./routes/auth"); 
 const ihaleRoutes = require("./routes/ihale");
 
-// Modeller (Hocanın notlarına uygun)
+// Modeller
 const User = require("./models/user");
 const Tender = require("./models/tender");
-const Bid = require("./models/bid"); // YENİ: Teklif Modelini ekledik
+const Bid = require("./models/bid");
+const Category = require("./models/category"); // Kategori Modeli
 const sequelize = require("./data/connection");
 
 app.set('view engine', 'ejs'); 
@@ -26,35 +27,54 @@ app.use(session({
 app.use("/libs", express.static(path.join(__dirname, "node_modules")));
 app.use("/static", express.static(path.join(__dirname, "public")));
 
-// --- TABLO İLİŞKİLERİ (ASSOCIATIONS) ---
+// --- TABLO İLİŞKİLERİ ---
 
-// 1. Kullanıcı - İhale İlişkisi (User -> Tenders)
-User.hasMany(Tender, {
-    foreignKey: 'Users_user_id', 
-    onDelete: "CASCADE"
-});
+// 1. Kullanıcı - İhale İlişkisi
+User.hasMany(Tender, { foreignKey: 'Users_user_id', onDelete: "CASCADE" });
 Tender.belongsTo(User, { foreignKey: 'Users_user_id' });
 
-// 2. Kullanıcı - Teklif İlişkisi (User -> Bids)
-User.hasMany(Bid, {
-    foreignKey: 'Users_user_id',
-    onDelete: "CASCADE"
-});
+// 2. Kullanıcı - Teklif İlişkisi
+User.hasMany(Bid, { foreignKey: 'Users_user_id', onDelete: "CASCADE" });
 Bid.belongsTo(User, { foreignKey: 'Users_user_id' });
 
-// 3. İhale - Teklif İlişkisi (Tender -> Bids)
-Tender.hasMany(Bid, {
-    foreignKey: 'Tenders_tender_id',
-    onDelete: "CASCADE" // İhale silinirse teklifleri de silinsin
-});
+// 3. İhale - Teklif İlişkisi
+Tender.hasMany(Bid, { foreignKey: 'Tenders_tender_id', onDelete: "CASCADE" });
 Bid.belongsTo(Tender, { foreignKey: 'Tenders_tender_id' });
 
+// 4. Kategori - İhale İlişkisi
+Category.hasMany(Tender, { 
+    foreignKey: 'Categories_category_id', 
+    onDelete: "SET NULL" 
+});
+Tender.belongsTo(Category, { foreignKey: 'Categories_category_id' });
 
-// Veritabanını Senkronize Et
+
+// --- VERİTABANI SENKRONİZASYONU ---
 async function syncDatabase() {
     try {
         await sequelize.sync({ force: false });
-        console.log("✅ Tüm Tablolar ve İlişkiler senkronize edildi.");
+        console.log("✅ Tablolar senkronize edildi.");
+
+        // Kategorileri Kontrol Et ve Doldur
+        const count = await Category.count();
+        if(count === 0) {
+            await Category.bulkCreate([
+                { name: "Elektronik" },
+                { name: "Vasıta" },
+                { name: "Emlak & Konut" },
+                { name: "Giyim & Moda" },
+                { name: "Ev & Yaşam" },
+                { name: "Spor & Outdoor" },
+                { name: "Hobi & Oyuncak" },
+                { name: "Kozmetik & Kişisel Bakım" },
+                { name: "Kitap & Dergi" },
+                { name: "Koleksiyon & Antika" },
+                { name: "Sanayi & İş Makineleri" },
+                { name: "Diğer" }
+            ]);
+            console.log("🚀 Genişletilmiş kategoriler eklendi.");
+        }
+
     } catch (err) {
         console.error("❌ Senkronizasyon Hatası:", err);
     }

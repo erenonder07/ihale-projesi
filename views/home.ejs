@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>İhale Paneli</title>
+    <title>İhale Paneli - Ana Sayfa</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -37,7 +37,15 @@
             font-family: 'Courier New', Courier, monospace;
             letter-spacing: 1px;
         }
-        /* Footer'ı en alta itmek için */
+        /* Kategori butonlarını kaydırmak için */
+        .category-scroll::-webkit-scrollbar {
+            height: 5px;
+        }
+        .category-scroll::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 10px;
+        }
+        
         main {
             flex: 1;
         }
@@ -59,7 +67,7 @@
             
             <div class="d-flex gap-2">
                 <a href="/dashboard" class="btn btn-outline-info btn-sm fw-semibold">
-                    🎛️ Yönetim Paneli
+                    <i class="fas fa-columns me-1"></i> Yönetim Paneli
                 </a>
                 <a href="/logout" class="btn btn-outline-light btn-sm">
                     <i class="fas fa-sign-out-alt"></i> Güvenli Çıkış
@@ -70,43 +78,72 @@
 
     <main class="container">
         
-        <div class="row mb-4">
+        <div class="row mb-3">
             <div class="col-12">
                 <div class="btn-group w-100 shadow-sm" role="group">
-                    <a href="/" class="btn <%= seciliFiltre === 'tumu' ? 'btn-dark' : 'btn-outline-dark' %> fw-bold py-2">
+                    <a href="/?durum=tumu&kategori=<%= seciliKategori %>" class="btn <%= seciliFiltre === 'tumu' ? 'btn-dark' : 'btn-outline-dark' %> fw-bold py-2">
                         <i class="fas fa-th-large me-2"></i> Tümü
                     </a>
-                    <a href="/?durum=aktif" class="btn <%= seciliFiltre === 'aktif' ? 'btn-success' : 'btn-outline-success' %> fw-bold py-2">
+                    <a href="/?durum=aktif&kategori=<%= seciliKategori %>" class="btn <%= seciliFiltre === 'aktif' ? 'btn-success' : 'btn-outline-success' %> fw-bold py-2">
                         <i class="fas fa-clock me-2"></i> Devam Edenler
                     </a>
-                    <a href="/?durum=kapali" class="btn <%= seciliFiltre === 'kapali' ? 'btn-secondary' : 'btn-outline-secondary' %> fw-bold py-2">
+                    <a href="/?durum=kapali&kategori=<%= seciliKategori %>" class="btn <%= seciliFiltre === 'kapali' ? 'btn-secondary' : 'btn-outline-secondary' %> fw-bold py-2">
                         <i class="fas fa-check-double me-2"></i> Tamamlananlar
                     </a>
                 </div>
             </div>
         </div>
 
+        <div class="row mb-4">
+            <div class="col-12 overflow-auto category-scroll">
+                <div class="d-flex gap-2 pb-2">
+                    <a href="/?durum=<%= seciliFiltre %>&kategori=hepsi" 
+                       class="btn btn-sm <%= seciliKategori === 'hepsi' ? 'btn-primary' : 'btn-outline-primary' %> rounded-pill px-3 fw-bold border-2">
+                        Tüm Kategoriler
+                    </a>
+
+                    <% categories.forEach(cat => { %>
+                        <a href="/?durum=<%= seciliFiltre %>&kategori=<%= cat.category_id %>" 
+                           class="btn btn-sm <%= Number(seciliKategori) === cat.category_id ? 'btn-primary' : 'btn-outline-primary' %> rounded-pill px-3 text-nowrap fw-bold border-2">
+                            <%= cat.name %>
+                        </a>
+                    <% }) %>
+                </div>
+            </div>
+        </div>
+
         <div class="d-flex align-items-center justify-content-between mb-4">
-            <h3 class="fw-bold text-dark m-0">
+            <h3 class="fw-bold text-dark m-0 d-flex align-items-center gap-2">
                 <% if(seciliFiltre === 'aktif') { %> 
-                    <span class="text-success">🟢 Devam Eden İhaleler</span> 
+                    <i class="fas fa-circle text-success fs-5"></i> Devam Eden
                 <% } else if(seciliFiltre === 'kapali') { %> 
-                    <span class="text-secondary">🏁 Tamamlanmış İhaleler</span> 
+                    <i class="fas fa-circle text-secondary fs-5"></i> Biten
                 <% } else { %> 
-                    <span class="text-dark">📦 Tüm İhaleler</span> 
+                    <i class="fas fa-layer-group text-dark fs-5"></i> Tüm
                 <% } %>
+                
+                <span class="text-muted fw-normal mx-1">/</span>
+                
+                <% 
+                   const seciliKatAd = categories.find(c => c.category_id == seciliKategori);
+                   const baslikKategori = seciliKategori === 'hepsi' ? 'Tüm Kategoriler' : (seciliKatAd ? seciliKatAd.name : 'Bilinmeyen');
+                %>
+                <span class="text-primary"><%= baslikKategori %></span>
             </h3>
-            <span class="badge bg-primary rounded-pill px-3 py-2"><%= ihaleler.length %> İlan Listelendi</span>
+            <span class="badge bg-primary rounded-pill px-3 py-2 fs-6 shadow-sm"><%= ihaleler.length %> İlan</span>
         </div>
         
         <div class="row">
     
         <% if (ihaleler.length === 0) { %>
             <div class="col-12">
-                <div class="alert alert-warning shadow-sm border-0 text-center py-4">
-                    <i class="fas fa-search fa-2x mb-3 opacity-50"></i><br>
-                    <strong>Aradığınız kriterde ihale bulunamadı.</strong><br>
-                    Lütfen diğer filtreleri deneyin veya daha sonra tekrar kontrol edin.
+                <div class="alert alert-light shadow-sm border text-center py-5">
+                    <div class="text-muted mb-3">
+                        <i class="fas fa-search fa-3x opacity-25"></i>
+                    </div>
+                    <h5 class="fw-bold text-secondary">Aradığınız kriterde ihale bulunamadı.</h5>
+                    <p class="text-muted small">Lütfen filtreleri değiştirerek tekrar deneyin.</p>
+                    <a href="/" class="btn btn-sm btn-outline-primary mt-2">Filtreleri Temizle</a>
                 </div>
             </div>
         <% } %>
@@ -124,18 +161,29 @@
             <div class="col-md-4 mb-4">
                 <div class="card h-100 border-0 shadow-sm overflow-hidden">
                     
-                    <div style="overflow: hidden; height: 220px; position: relative;">
+                    <div style="overflow: hidden; height: 220px; position: relative; background-color: #f1f3f5;">
                         <% if (ihale.image_url) { %>
                             <img src="/static/images/<%= ihale.image_url %>" class="card-img-top" alt="Ürün Resmi" style="height: 100%; width: 100%; object-fit: cover;">
                         <% } else { %>
-                            <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 100%;">
-                                <span><i class="fas fa-image fa-2x"></i><br>Görsel Yok</span>
+                            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+                                <i class="fas fa-camera fa-3x mb-2 opacity-50"></i>
+                                <small>Görsel Yok</small>
                             </div>
                         <% } %>
                         
+                        <% if(ihale.Category) { %>
+                            <div class="position-absolute top-0 start-0 m-2">
+                                <span class="badge bg-dark bg-opacity-75 backdrop-blur shadow-sm">
+                                    <%= ihale.Category.name %>
+                                </span>
+                            </div>
+                        <% } %>
+
                         <div class="position-absolute top-0 end-0 m-2">
                             <% if (new Date(ihale.end_date) > new Date() && ihale.status == 1) { %>
-                                <span class="badge bg-danger shadow animate-pulse">Canlı</span>
+                                <span class="badge bg-danger shadow animate-pulse">
+                                    <i class="fas fa-circle fa-xs me-1"></i> Canlı
+                                </span>
                             <% } else { %>
                                 <span class="badge bg-secondary shadow">Bitti</span>
                             <% } %>
@@ -143,22 +191,29 @@
                     </div>
 
                     <div class="card-body">
-                        <h5 class="card-title text-dark fw-bold"><%= ihale.title %></h5>
-                        <p class="card-text text-muted small" style="min-height: 40px;">
-                            <%- ihale.description.length > 80 ? ihale.description.substring(0, 80) + '...' : ihale.description %>
+                        <h5 class="card-title text-dark fw-bold mb-1"><%= ihale.title %></h5>
+                        
+                        <p class="card-text text-muted small mt-2" style="min-height: 40px;">
+                            <%- ihale.description.length > 75 ? ihale.description.substring(0, 75) + '...' : ihale.description %>
                         </p>                    
                         
-                        <div class="bg-light p-3 rounded-3 mb-3 border">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-secondary small fw-bold text-uppercase">Güncel Fiyat</span>
+                        <div class="bg-light p-3 rounded-3 mb-3 border d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-secondary fw-bold d-block" style="font-size: 0.7rem;">GÜNCEL FİYAT</small>
                                 <span class="text-success fw-bold fs-5">
                                     <%= fiyatFormat(ihale.en_yuksek_teklif ? ihale.en_yuksek_teklif : ihale.start_price) %> ₺
+                                </span>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block" style="font-size: 0.7rem;">TEKLİF SAYISI</small>
+                                <span class="fw-bold text-dark">
+                                    <i class="fas fa-gavel text-warning"></i> <%= ihale.Bids ? ihale.Bids.length : 0 %>
                                 </span>
                             </div>
                         </div>
 
                         <div class="alert alert-warning p-2 text-center mb-0 d-flex justify-content-between align-items-center">
-                            <small class="text-muted fw-bold" style="font-size: 0.7rem;">⏳ SÜRE</small>
+                            <small class="text-muted fw-bold" style="font-size: 0.7rem;">⏳ KALAN SÜRE</small>
                             <span class="countdown-box text-danger" data-endtime="<%= ihale.end_date %>">
                                 Hesaplanıyor...
                             </span>
@@ -166,20 +221,26 @@
                     </div>
 
                     <div class="card-footer bg-white border-top-0 pb-3 pt-0">
-                        <form action="/bid" method="post" class="d-flex gap-2 bid-form">
-                            <input type="hidden" name="tender_id" value="<%= ihale.tender_id %>">
-                            
-                            <input type="number" 
-                                name="amount" 
-                                class="form-control" 
-                                placeholder="Min: <%= fiyatFormat(minTeklif) %>" 
-                                required 
-                                min="<%= minTeklif %>">
-                            
-                            <button type="submit" class="btn btn-primary fw-bold px-3 btn-bid">
-                                Ver
+                        <% if (new Date(ihale.end_date) > new Date() && ihale.status == 1) { %>
+                            <form action="/bid" method="post" class="d-flex gap-2 bid-form">
+                                <input type="hidden" name="tender_id" value="<%= ihale.tender_id %>">
+                                
+                                <input type="number" 
+                                    name="amount" 
+                                    class="form-control" 
+                                    placeholder="Teklif: <%= fiyatFormat(minTeklif) %>+" 
+                                    required 
+                                    min="<%= minTeklif %>">
+                                
+                                <button type="submit" class="btn btn-primary fw-bold px-3 btn-bid">
+                                    Ver
+                                </button>
+                            </form>
+                        <% } else { %>
+                            <button class="btn btn-secondary w-100 disabled" disabled>
+                                Bu İhale Sona Erdi
                             </button>
-                        </form>
+                        <% } %>
                     </div>
 
                 </div>
@@ -192,12 +253,12 @@
     <footer class="text-center">
         <div class="container">
             <small>&copy; 2025 İhale Paneli Projesi. Tüm hakları saklıdır.</small> <br>
-            <small class="text-secondary" style="font-size: 10px;">Geliştirici Sürümü v1.0</small>
+            <small class="text-secondary" style="font-size: 10px;">Geliştirici Sürümü v2.0</small>
         </div>
     </footer>
 
     <script>
-        // 1. SAYAÇ KODU (Otomatik Kapanma Eklendi)
+        // 1. SAYAÇ MANTIĞI
         function updateTimers() {
             const timers = document.querySelectorAll('.countdown-box');
             timers.forEach(timer => {
@@ -211,23 +272,12 @@
                     timer.classList.remove('text-danger');
                     timer.classList.add('text-secondary');
                     
-                    // İhale bittiyse butonu pasif yap
                     const card = timer.closest('.card');
-                    const form = card.querySelector('form');
                     const badge = card.querySelector('.badge.bg-danger');
-                    
-                    // Formu kapat
-                    if(form) {
-                        form.innerHTML = '<div class="text-center text-muted w-100 py-2 small fw-bold bg-light rounded">🚫 Bu ihale kapanmıştır</div>';
-                    }
-                    
-                    // Rozeti güncelle
                     if(badge) { 
-                        badge.classList.remove('bg-danger'); 
-                        badge.classList.add('bg-secondary'); 
+                        badge.className = 'badge bg-secondary shadow'; 
                         badge.innerText = 'Bitti'; 
                     }
-                    
                 } else {
                     const days = Math.floor(distance / (1000 * 60 * 60 * 24));
                     const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -235,34 +285,33 @@
                     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
                     if (days > 0) {
-                        timer.innerHTML = `${days}G ${hours}S ${minutes}D`;
+                        timer.innerHTML = `${days}G ${hours}Sa`;
                     } else {
-                        // Son 1 saat kaldıysa yanıp sön
-                        if(hours === 0) {
-                            timer.style.animation = "blink 1s infinite";
-                        }
                         timer.innerHTML = `${hours}:${minutes}:${seconds}`;
+                        if(hours === 0 && minutes < 30) {
+                             timer.parentElement.classList.add('animate-pulse'); // Son 30 dk uyarı efekti
+                        }
                     }
                 }
             });
         }
 
-        // Yanıp sönme efekti CSS
+        // CSS Efektleri
         const style = document.createElement('style');
-        style.innerHTML = `@keyframes blink { 50% { opacity: 0.5; } } .animate-pulse { animation: blink 2s infinite; }`;
+        style.innerHTML = `@keyframes blink { 50% { opacity: 0.5; } } .animate-pulse { animation: blink 1.5s infinite; } .backdrop-blur { backdrop-filter: blur(4px); }`;
         document.head.appendChild(style);
 
         updateTimers();
         setInterval(updateTimers, 1000);
 
-        // 2. BUTON YÜKLENİYOR EFEKTİ
+        // 2. Buton Yükleniyor Efekti
         const forms = document.querySelectorAll('.bid-form');
         forms.forEach(form => {
             form.addEventListener('submit', function() {
                 const btn = this.querySelector('.btn-bid');
                 if(btn) {
                     btn.disabled = true; 
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
                 }
             });
         });

@@ -32,6 +32,16 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">Kategori</label>
+                        <select class="form-select" name="category_id" required>
+                        <option value="" selected disabled>Lütfen bir kategori seçin...</option>
+                        <% categories.forEach(cat => { %>
+                        <option value="<%= cat.category_id %>"><%= cat.name %></option>
+                        <% }) %>
+                        </select>
+                        </div>
+
+                    <div class="mb-3">
                         <label class="form-label">Açıklama</label>
                         <textarea class="form-control" name="description" id="editor"></textarea>
                     </div>
