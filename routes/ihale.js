@@ -1,18 +1,20 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../data/db");
 
-// --- MULTER AYARLARI (Resim Yükleme İçin) ---
+// ARTIK ESKİ DB DOSYASINI DEĞİL, MODELLERİ ÇAĞIRIYORUZ
+const Tender = require("../models/tender");
+const User = require("../models/user");
+const Bid = require("../models/bid");
+
+// Resim Yükleme Ayarları (Aynı Kalıyor)
 const multer = require("multer");
 const upload = multer({ dest: "./public/images" }); 
 
-// 1. DASHBOARD (PANEL) SAYFASI - (Hata Veren Yer Burasıydı)
+// 1. DASHBOARD (PANEL) SAYFASI
 router.get("/dashboard", function(req, res) {
-    // Giriş kontrolü: Kimlik yoksa login'e git
     if (!req.session.user_id) {
         return res.redirect("/login");
     }
-    // Giriş varsa dashboard.ejs dosyasını aç
     res.render("dashboard", {
         user: req.session 
     });
@@ -24,37 +26,53 @@ router.get("/yeni-ilan", function(req, res) {
     res.render("new-tender");
 });
 
-// 3. ANASAYFA (İhaleleri Listele)
+// 3. ANASAYFA (İhaleleri Listele - MODERN YÖNTEM)
 router.get("/", async function(req, res) {            
-    
-    // GÜVENLİK: Anasayfaya giren kişi giriş yapmamışsa Login'e atılsın
-    if (!req.session.user_id) {
-        return res.redirect("/login");
-    }
+    if (!req.session.user_id) return res.redirect("/login");
 
     try {
-        const query = `
-            SELECT Tenders.*, MAX(Bids.amount) AS en_yuksek_teklif 
-            FROM Tenders 
-            LEFT JOIN Bids ON Tenders.tender_id = Bids.Tenders_tender_id 
-            GROUP BY Tenders.tender_id
-            ORDER BY Tenders.tender_id DESC
-        `;
+        // SQL YERİNE SEQUELIZE KULLANIYORUZ:
+        // "Bana tüm ihaleleri getir, yanında da Teklifleri (Bids) getir."
+        const tenders = await Tender.findAll({
+            include: [
+                { model: Bid } // İlişkili teklifleri de çek
+            ],
+            order: [['tender_id', 'DESC']] // En yeni en üstte
+        });
 
-        const [sonuclar, ] = await db.execute(query);
+        // EJS dosyamız "en_yuksek_teklif" diye bir veri bekliyor.
+        // Bunu hesaplayıp her ihalenin içine ekleyelim:
+        const islenmisIhaleler = tenders.map(tender => {
+            // Sequelize verisini düz objeye çevir
+            const ihaleObj = tender.toJSON();
+            
+            // Teklifler arasından en büyüğünü bul
+            if (ihaleObj.Bids && ihaleObj.Bids.length > 0) {
+                // Teklifleri fiyatlarına göre sırala, en yükseği al
+                const maxTeklif = Math.max(...ihaleObj.Bids.map(b => parseFloat(b.amount)));
+                ihaleObj.en_yuksek_teklif = maxTeklif;
+            } else {
+                ihaleObj.en_yuksek_teklif = null;
+            }
+            
+            return ihaleObj;
+        });
         
         res.render("home", {
-            ihaleler: sonuclar,
+            ihaleler: islenmisIhaleler,
             user: req.session 
         });
+
     } catch(err) {
         console.log(err);
         res.send("Hata: " + err.message);
     }
 });
 
-// 4. İHALE KAYDETME İŞLEMİ (Resimli)
+// 4. İHALE KAYDETME İŞLEMİ (MODERN YÖNTEM)
 router.post("/add-tender", upload.single("resim"), async function(req, res) { 
+    if (!req.session.user_id) return res.redirect("/login");
+
     const title = req.body.title;
     const desc = req.body.description;
     const price = req.body.start_price;
@@ -65,19 +83,18 @@ router.post("/add-tender", upload.single("resim"), async function(req, res) {
         resimAdi = req.file.filename; 
     }
 
-    if (!req.session.user_id) {
-        return res.redirect("/login");
-    }
-
     try {
-        const userId = req.session.user_id; 
-
-        await db.execute(
-            "INSERT INTO Tenders(title, description, start_price, end_date, Users_user_id, status, image_url) VALUES(?,?,?,?,?,?,?)", 
-            [title, desc, price, date, userId, 1, resimAdi]
-        );
+        // SQL INSERT YERİNE:
+        await Tender.create({
+            title: title,
+            description: desc,
+            start_price: price,
+            end_date: date,
+            image_url: resimAdi,
+            Users_user_id: req.session.user_id, // İlişki sütunu
+            status: 1
+        });
             
-        // Kayıt bitince Panele dönsün
         res.redirect("/dashboard");             
     } catch(err) {
         console.log(err);
@@ -85,51 +102,43 @@ router.post("/add-tender", upload.single("resim"), async function(req, res) {
     }
 });
 
-// 5. TEKLİF VERME İŞLEMİ
+// 5. TEKLİF VERME İŞLEMİ (MODERN YÖNTEM)
 router.post("/bid", async function(req, res) {           
-    
+    if (!req.session.user_id) return res.send("Giriş yapmalısınız!");
+
     const tenderId = req.body.tender_id; 
     const amount = req.body.amount;     
-    
-    // 1. Giriş yapmamışsa durdur
-    if (!req.session.user_id) {
-        return res.send("Giriş yapmalısınız!");
-    }
+    const userId = req.session.user_id;
 
     try {
-        const userId = req.session.user_id; 
+        // 1. İhaleyi bul (Sahibini kontrol etmek için)
+        const ihale = await Tender.findByPk(tenderId);
 
-        // --- YENİ EKLENEN KONTROL KISMI BAŞLANGIÇ ---
-        
-        // Önce ihalenin sahibini veritabanından öğrenelim
-        const [ihaleBilgisi] = await db.execute(
-            "SELECT Users_user_id FROM Tenders WHERE tender_id = ?", 
-            [tenderId]
-        );
-        
-        const ihaleSahibiId = ihaleBilgisi[0].Users_user_id;
+        if (!ihale) {
+            return res.send("İhale bulunamadı!");
+        }
 
-        // EĞER: İhale Sahibi == Şu Anki Kullanıcı ise...
-        if (ihaleSahibiId === userId) {
+        // Kendi malına teklif veremezsin
+        if (ihale.Users_user_id === userId) {
             return res.send(`
                 <h1>Hata!</h1>
                 <h3>Kendi ilanınıza teklif veremezsiniz.</h3>
                 <a href='/'>Listeye Dön</a>
             `);
         }
-        // --- KONTROL BİTİŞ ---
 
-        // Sorun yoksa teklifi kaydet
-        await db.execute(
-            "INSERT INTO Bids(amount, Users_user_id, Tenders_tender_id) VALUES(?,?,?)", 
-            [amount, userId, tenderId]
-        );
+        // 2. Teklifi Kaydet (Bid.create)
+        await Bid.create({
+            amount: amount,
+            Users_user_id: userId,
+            Tenders_tender_id: tenderId
+        });
 
         res.redirect("/");
         
     } catch(err) {
         console.log(err);
-        res.send("Teklif verirken hata oluştu: " + err.message);
+        res.send("Teklif hatası: " + err.message);
     }
 });
 

@@ -3,16 +3,16 @@ const app = express();
 const path = require("path");
 const session = require("express-session");
 
-// Rotalarımızı çağırıyoruz
+// Rotalar
 const authRoutes = require("./routes/auth"); 
 const ihaleRoutes = require("./routes/ihale");
 
-// Modellerimizi çağırıyoruz (Hocanın notlarına uygun)
+// Modeller (Hocanın notlarına uygun)
 const User = require("./models/user");
 const Tender = require("./models/tender");
-const sequelize = require("./data/connection"); // Veritabanı bağlantımız
+const Bid = require("./models/bid"); // YENİ: Teklif Modelini ekledik
+const sequelize = require("./data/connection");
 
-// Görüntü Motoru Ayarı
 app.set('view engine', 'ejs'); 
 app.use(express.urlencoded({ extended: true })); 
 
@@ -23,42 +23,45 @@ app.use(session({
     saveUninitialized: true
 }));
 
-// Statik Dosyalar
 app.use("/libs", express.static(path.join(__dirname, "node_modules")));
 app.use("/static", express.static(path.join(__dirname, "public")));
 
 // --- TABLO İLİŞKİLERİ (ASSOCIATIONS) ---
-// Hocanın notlarındaki 'One to Many' yapısına tam uyumlu kısım:
 
-// 1. Bir Kullanıcının ÇOK İhalesi olabilir (hasMany)
+// 1. Kullanıcı - İhale İlişkisi (User -> Tenders)
 User.hasMany(Tender, {
-    foreignKey: {
-        name: 'Users_user_id', // İhale tablosunda kullanıcıyı tutacak sütun
-        allowNull: false
-    },
-    // Kullanıcı silinirse ihaleleri de silinsin (CASCADE)
-    onDelete: "CASCADE", 
-    onUpdate: "RESTRICT"
+    foreignKey: 'Users_user_id', 
+    onDelete: "CASCADE"
 });
+Tender.belongsTo(User, { foreignKey: 'Users_user_id' });
 
-// 2. Bir İhale TEK BİR Kullanıcıya aittir (belongsTo)
-Tender.belongsTo(User, {
-    foreignKey: 'Users_user_id'
+// 2. Kullanıcı - Teklif İlişkisi (User -> Bids)
+User.hasMany(Bid, {
+    foreignKey: 'Users_user_id',
+    onDelete: "CASCADE"
 });
+Bid.belongsTo(User, { foreignKey: 'Users_user_id' });
 
-// Veritabanını Senkronize Et (İlişkileri Kur)
+// 3. İhale - Teklif İlişkisi (Tender -> Bids)
+Tender.hasMany(Bid, {
+    foreignKey: 'Tenders_tender_id',
+    onDelete: "CASCADE" // İhale silinirse teklifleri de silinsin
+});
+Bid.belongsTo(Tender, { foreignKey: 'Tenders_tender_id' });
+
+
+// Veritabanını Senkronize Et
 async function syncDatabase() {
     try {
-        // force: false -> Mevcut verileri silmeden tabloları güncelle
         await sequelize.sync({ force: false });
-        console.log("✅ Tablolar ve İlişkiler başarıyla senkronize edildi.");
+        console.log("✅ Tüm Tablolar ve İlişkiler senkronize edildi.");
     } catch (err) {
         console.error("❌ Senkronizasyon Hatası:", err);
     }
 }
 syncDatabase();
 
-// Rotaları Kullanıma Al
+// Rotaları Aktif Et
 app.use(authRoutes); 
 app.use(ihaleRoutes); 
 
