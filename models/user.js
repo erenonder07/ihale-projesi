@@ -2,7 +2,6 @@ const { DataTypes } = require('sequelize');
 const sequelize = require("../data/connection"); 
 
 const User = sequelize.define('Users', {
- 
     user_id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -30,13 +29,5 @@ const User = sequelize.define('Users', {
         allowNull: false
     }
 });
-
-// Tabloyu veritabanıyla eşle
-// force: false diyoruz ki içindeki veriler silinmesin!
-async function sync() {
-    await User.sync({ force: false }); 
-    console.log("Users tablosu eklendi");
-}
-sync();
 
 module.exports = User;

@@ -52,7 +52,7 @@ Tender.belongsTo(Category, { foreignKey: 'Categories_category_id' });
 // --- VERİTABANI SENKRONİZASYONU ---
 async function syncDatabase() {
     try {
-        await sequelize.sync({ force: true });
+        await sequelize.sync({ force: true });   //burası önemli dikkat
         console.log("✅ Tablolar senkronize edildi.");
 
         // Kategorileri Kontrol Et ve Doldur
