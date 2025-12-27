@@ -1,18 +1,18 @@
 const express = require("express");
 const router = express.Router();
+// HOCANIN NOTLARINDAKİ GİBİ OPERATÖRLERİ (Op) ÇAĞIRIYORUZ
+const { Op } = require("sequelize"); 
 
-// MODELLERİ ÇAĞIRIYORUZ (Hocanın Notlarına Uygun)
+// MODELLER
 const Tender = require("../models/tender");
 const User = require("../models/user");
 const Bid = require("../models/bid");
 
-// Resim Yükleme Ayarları
 const multer = require("multer");
 const upload = multer({ dest: "./public/images" }); 
 
-// 1. DASHBOARD (PANEL) SAYFASI
+// 1. DASHBOARD
 router.get("/dashboard", function(req, res) {
-    // Güvenlik: Giriş yoksa login'e at
     if (!req.session.user_id) {
         return res.redirect("/login");
     }
@@ -21,43 +21,64 @@ router.get("/dashboard", function(req, res) {
     });
 });
 
-// 2. YENİ İLAN OLUŞTURMA SAYFASI
+// 2. YENİ İLAN SAYFASI
 router.get("/yeni-ilan", function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
     res.render("new-tender");
 });
 
-// 3. ANASAYFA (İhaleleri Listele - EAGER LOADING)
+// 3. ANASAYFA (FİLTRELEME EKLENDİ - Op.gt ve Op.lt)
 router.get("/", async function(req, res) {            
     if (!req.session.user_id) return res.redirect("/login");
 
     try {
-        // HOCANIN YÖNTEMİ: İhaleleri çekerken Teklifleri de (Bids) dahil et (include)
+        // Linkten gelen filtre bilgisini al (Örn: /?durum=aktif)
+        const durum = req.query.durum; 
+        
+        let whereKosulu = {}; // Varsayılan: Hepsi
+        const now = new Date(); // Şu anki zaman
+
+        // Hocanın 'where' ve 'Op' mantığını kullanıyoruz:
+        if (durum === 'aktif') {
+            whereKosulu = {
+                end_date: { [Op.gt]: now }, // Bitiş tarihi ŞİMDİDEN BÜYÜK olanlar (Gelecek)
+                status: 1
+            };
+        } else if (durum === 'kapali') {
+            whereKosulu = {
+                [Op.or]: [
+                    { end_date: { [Op.lt]: now } }, // Bitiş tarihi ŞİMDİDEN KÜÇÜK olanlar (Geçmiş)
+                    { status: 0 }
+                ]
+            };
+        }
+
+        // Sorguyu çalıştır
         const tenders = await Tender.findAll({
+            where: whereKosulu, // Filtreyi buraya koyduk
             include: [
                 { model: Bid } 
             ],
-            order: [['tender_id', 'DESC']] // En yeni en üstte
+            order: [['end_date', 'ASC']] // Bitiş tarihi en yakın olan en üstte
         });
 
-        // EJS'ye göndermeden önce "En Yüksek Teklifi" hesaplıyoruz
+        // En yüksek teklif hesaplama (Aynı kalıyor)
         const islenmisIhaleler = tenders.map(tender => {
             const ihaleObj = tender.toJSON();
-            
-            // Eğer teklif varsa en büyüğünü bul, yoksa null yap
             if (ihaleObj.Bids && ihaleObj.Bids.length > 0) {
                 const maxTeklif = Math.max(...ihaleObj.Bids.map(b => parseFloat(b.amount)));
                 ihaleObj.en_yuksek_teklif = maxTeklif;
             } else {
                 ihaleObj.en_yuksek_teklif = null;
             }
-            
             return ihaleObj;
         });
         
+        // Sayfaya mevcut filtre bilgisini de gönderiyoruz (durum: durum)
         res.render("home", {
             ihaleler: islenmisIhaleler,
-            user: req.session 
+            user: req.session,
+            seciliFiltre: durum || 'tumu' 
         });
 
     } catch(err) {
@@ -66,7 +87,7 @@ router.get("/", async function(req, res) {
     }
 });
 
-// 4. İHALE KAYDETME İŞLEMİ (SEQUELIZE CREATE)
+// 4. İHALE EKLEME
 router.post("/add-tender", upload.single("resim"), async function(req, res) { 
     if (!req.session.user_id) return res.redirect("/login");
 
@@ -81,17 +102,15 @@ router.post("/add-tender", upload.single("resim"), async function(req, res) {
     }
 
     try {
-        // SQL yerine Model kullanıyoruz
         await Tender.create({
             title: title,
             description: desc,
             start_price: price,
             end_date: date,
             image_url: resimAdi,
-            Users_user_id: req.session.user_id, // İlişki sütunu (Foreign Key)
+            Users_user_id: req.session.user_id,
             status: 1
         });
-            
         res.redirect("/dashboard");             
     } catch(err) {
         console.log(err);
@@ -99,7 +118,7 @@ router.post("/add-tender", upload.single("resim"), async function(req, res) {
     }
 });
 
-// 5. TEKLİF VERME İŞLEMİ
+// 5. TEKLİF VERME
 router.post("/bid", async function(req, res) {           
     if (!req.session.user_id) return res.send("Giriş yapmalısınız!");
 
@@ -108,29 +127,23 @@ router.post("/bid", async function(req, res) {
     const userId = req.session.user_id;
 
     try {
-        // Önce ihaleyi bul (Sahibini kontrol etmek için)
         const ihale = await Tender.findByPk(tenderId);
+        if (!ihale) return res.send("İhale bulunamadı!");
 
-        if (!ihale) {
-            return res.send("İhale bulunamadı!");
-        }
-
-        // Kendi malına teklif veremezsin kontrolü
         if (ihale.Users_user_id === userId) {
-            return res.send(`
-                <h1>Hata!</h1>
-                <h3>Kendi ilanınıza teklif veremezsiniz.</h3>
-                <a href='/'>Listeye Dön</a>
-            `);
+            return res.send(`<h1>Hata!</h1><h3>Kendi ilanınıza teklif veremezsiniz.</h3><a href='/'>Listeye Dön</a>`);
         }
 
-        // Teklifi Kaydet
+        // Süre kontrolü (Backend tarafında da yapalım)
+        if (new Date(ihale.end_date) < new Date()) {
+            return res.send("Bu ihalenin süresi dolmuş, teklif verilemez.");
+        }
+
         await Bid.create({
             amount: amount,
             Users_user_id: userId,
             Tenders_tender_id: tenderId
         });
-
         res.redirect("/");
         
     } catch(err) {
@@ -139,39 +152,38 @@ router.post("/bid", async function(req, res) {
     }
 });
 
-// 6. YENİ ÖZELLİK: İLANLARIM VE GELEN TEKLİFLER (NESTED INCLUDE)
+// 6. KULLANICININ İLANLARI
 router.get("/my-tenders", async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
-
     try {
         const userId = req.session.user_id;
-
-        // HOCANIN EAGER LOADING YÖNTEMİ (İÇ İÇE SORGULAR):
-        // 1. Benim ihalelerimi bul
-        // 2. O ihalelere gelen Teklifleri (Bid) getir
-        // 3. O teklifleri veren Kullanıcıları (User) getir
         const myTenders = await Tender.findAll({
             where: { Users_user_id: userId }, 
             include: [
                 {
                     model: Bid, 
-                    include: [
-                        { model: User } // İsim soyisim görmek için
-                    ]
+                    include: [{ model: User }]
                 }
             ],
             order: [['tender_id', 'DESC']]
         });
-
         res.render("my-tenders", {
             tenders: myTenders,
             user: req.session
         });
-
     } catch(err) {
         console.log(err);
         res.send("Hata: " + err.message);
     }
+});
+
+// 7. ÇIKIŞ
+router.get("/logout", function(req, res) {
+    req.session.destroy((err) => {
+        if (err) console.log(err);
+        res.clearCookie('connect.sid'); 
+        res.redirect("/login");
+    });
 });
 
 module.exports = router;
