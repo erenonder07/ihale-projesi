@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>İhale Paneli - Ana Sayfa</title>
+    <title>İhale Paneli</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -10,312 +10,290 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
-            background-color: #f3f4f6;
         }
-        
-        /* MODERN FİLTRE ÇUBUĞU */
-        .filter-bar {
+
+        /* Üst Kontrol Çubuğu */
+        .control-bar {
             background: white;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 15px rgba(0,0,0,0.03);
         }
 
-        /* Kategori Kaydırma Alanı */
-        .category-scroll {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            white-space: nowrap;
-            padding: 10px 0;
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
-        }
-        .category-scroll::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, Opera */
-        }
-
-        /* Kategori Etiketleri */
-        .cat-link {
-            display: inline-flex;
-            align-items: center;
-            padding: 6px 16px;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: #4b5563;
-            background-color: #f3f4f6;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            border: 1px solid transparent;
-        }
-
-        .cat-link:hover {
-            background-color: #e5e7eb;
-            color: #111827;
-        }
-
-        .cat-link.active {
-            background-color: #111827; /* Siyah Seçili */
-            color: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        /* Kart Tasarımı */
-        .card {
-            border: none;
-            border-radius: 16px;
-            transition: transform 0.2s, box-shadow 0.2s;
+        /* Kategori Seçim Alanı (Gizli Panel) */
+        .category-panel {
             background: white;
+            border-bottom: 1px solid #eee;
+            box-shadow: inset 0 5px 10px rgba(0,0,0,0.02);
         }
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08) !important;
-        }
-        
-        .status-toggle .btn {
+
+        .cat-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 10px 15px;
             border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
+            border: 1px solid #e9ecef;
+            background: white;
+            color: #495057;
+            transition: all 0.2s;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .cat-btn:hover {
+            background-color: #f1f3f5;
+            color: #212529;
+            transform: translateX(5px);
+        }
+
+        .cat-btn.active {
+            background-color: #212529;
+            color: white;
+            border-color: #212529;
+        }
+        .cat-btn.active:hover {
+            transform: none;
         }
         
-        main { flex: 1; margin-top: 20px; }
-        footer { background-color: #1f2937; color: #9ca3af; padding: 30px 0; margin-top: auto; }
+        /* Kart Tasarımı */
+        .tender-card {
+            border: none;
+            border-radius: 12px;
+            background: white;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .tender-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+        }
+
+        .card-img-wrap {
+            height: 220px;
+            overflow: hidden;
+            position: relative;
+            border-radius: 12px 12px 0 0;
+            background-color: #f1f3f5;
+        }
         
-        /* Yanıp Sönme Efekti */
-        @keyframes blink { 50% { opacity: 0.5; } }
-        .animate-pulse { animation: blink 2s infinite; }
+        .status-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 0.75rem;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        main { flex: 1; }
+        footer { margin-top: auto; background: #212529; padding: 40px 0; color: #adb5bd; }
+
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
+        .live-pulse { animation: pulse-red 2s infinite; }
     </style>
 </head>
-<body class="bg-light">
+<body>
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark py-3">
         <div class="container">
-            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
-                 <span class="bg-primary text-white rounded p-1 px-2 fs-6">İH</span> İhale<span class="text-primary">Paneli</span>
+            <a class="navbar-brand fw-bold" href="/">
+                🔥 İhale<span class="text-primary">Paneli</span>
             </a>
             
             <div class="d-flex gap-2">
-                <a href="/dashboard" class="btn btn-outline-light btn-sm px-3 rounded-pill fw-medium">
-                    <i class="fas fa-user-circle me-1"></i> Panelim
+                <a href="/dashboard" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                    <i class="fas fa-user me-1"></i> Panelim
                 </a>
-                <a href="/logout" class="btn btn-danger btn-sm px-3 rounded-pill fw-medium">
+                <a href="/logout" class="btn btn-danger btn-sm rounded-pill px-3">
                     <i class="fas fa-sign-out-alt"></i>
                 </a>
             </div>
         </div>
     </nav>
 
-    <div class="filter-bar">
+    <div class="control-bar">
         <div class="container">
-            <div class="d-flex align-items-center gap-3 py-2">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                 
-                <div class="d-none d-md-block border-end pe-3">
-                    <div class="btn-group status-toggle shadow-sm" role="group">
-                        <a href="/?durum=tumu&kategori=<%= seciliKategori %>" class="btn btn-sm <%= seciliFiltre === 'tumu' ? 'btn-dark' : 'btn-light text-muted border' %>">
-                            Tümü
-                        </a>
-                        <a href="/?durum=aktif&kategori=<%= seciliKategori %>" class="btn btn-sm <%= seciliFiltre === 'aktif' ? 'btn-success text-white' : 'btn-light text-muted border' %>">
-                            Aktif
-                        </a>
-                        <a href="/?durum=kapali&kategori=<%= seciliKategori %>" class="btn btn-sm <%= seciliFiltre === 'kapali' ? 'btn-secondary text-white' : 'btn-light text-muted border' %>">
-                            Biten
-                        </a>
-                    </div>
+                <div class="btn-group shadow-sm" role="group">
+                    <a href="/?durum=tumu&kategori=<%= seciliKategori %>" class="btn btn-sm <%= seciliFiltre === 'tumu' ? 'btn-dark' : 'btn-white border text-muted' %> fw-bold px-3">Tümü</a>
+                    <a href="/?durum=aktif&kategori=<%= seciliKategori %>" class="btn btn-sm <%= seciliFiltre === 'aktif' ? 'btn-success' : 'btn-white border text-muted' %> fw-bold px-3">Aktif</a>
+                    <a href="/?durum=kapali&kategori=<%= seciliKategori %>" class="btn btn-sm <%= seciliFiltre === 'kapali' ? 'btn-secondary' : 'btn-white border text-muted' %> fw-bold px-3">Biten</a>
                 </div>
 
-                <div class="d-md-none border-end pe-3">
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-light border dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown">
-                            <%= seciliFiltre === 'aktif' ? '🟢 Aktif' : (seciliFiltre === 'kapali' ? '🏁 Biten' : '📦 Tümü') %>
-                        </button>
-                        <ul class="dropdown-menu shadow border-0">
-                            <li><a class="dropdown-item" href="/?durum=tumu&kategori=<%= seciliKategori %>">Tümü</a></li>
-                            <li><a class="dropdown-item" href="/?durum=aktif&kategori=<%= seciliKategori %>">Aktif Olanlar</a></li>
-                            <li><a class="dropdown-item" href="/?durum=kapali&kategori=<%= seciliKategori %>">Bitenler</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="category-scroll flex-grow-1">
-                    <a href="/?durum=<%= seciliFiltre %>&kategori=hepsi" 
-                       class="cat-link <%= seciliKategori === 'hepsi' ? 'active' : '' %>">
-                       <i class="fas fa-border-all me-2 small"></i>Tümü
-                    </a>
-
-                    <% categories.forEach(cat => { %>
-                        <a href="/?durum=<%= seciliFiltre %>&kategori=<%= cat.category_id %>" 
-                           class="cat-link <%= Number(seciliKategori) === cat.category_id ? 'active' : '' %>">
-                            <%= cat.name %>
-                        </a>
-                    <% }) %>
-                </div>
-
+                <button class="btn btn-outline-dark fw-bold shadow-sm d-flex align-items-center gap-2" type="button" data-bs-toggle="collapse" data-bs-target="#kategoriMenu">
+                    <% 
+                       const seciliKatAd = categories.find(c => c.category_id == seciliKategori);
+                       const butonYazisi = seciliKategori === 'hepsi' ? 'Kategori Seç' : (seciliKatAd ? seciliKatAd.name : 'Kategori Seç');
+                    %>
+                    <i class="fas fa-filter"></i> 
+                    <span><%= butonYazisi %></span>
+                    <i class="fas fa-chevron-down small ms-1"></i>
+                </button>
             </div>
         </div>
     </div>
 
-    <main class="container">
-        
-        <div class="d-flex align-items-center justify-content-between mb-4">
-            <div>
-                <h5 class="fw-bold text-dark m-0 d-flex align-items-center gap-2">
-                    <% 
-                       const seciliKatAd = categories.find(c => c.category_id == seciliKategori);
-                       const baslikKategori = seciliKategori === 'hepsi' ? 'Vitrin' : (seciliKatAd ? seciliKatAd.name : 'Bilinmeyen');
-                    %>
-                    <span class="text-dark"><%= baslikKategori %></span>
-                    <span class="text-muted fw-normal small">kategorisindeki ilanlar</span>
-                </h5>
-            </div>
-            <span class="badge bg-white text-dark border shadow-sm px-3 py-2 rounded-pill">
-                <%= ihaleler.length %> İlan
-            </span>
-        </div>
-        
-        <div class="row g-4">
-    
-        <% if (ihaleler.length === 0) { %>
-            <div class="col-12">
-                <div class="text-center py-5">
-                    <div class="bg-white d-inline-block p-4 rounded-circle shadow-sm mb-3">
-                         <i class="fas fa-search fa-3x text-muted opacity-50"></i>
+    <div class="collapse <%= seciliKategori !== 'hepsi' ? '' : '' %>" id="kategoriMenu">
+        <div class="category-panel py-4">
+            <div class="container">
+                <div class="row g-3">
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <a href="/?durum=<%= seciliFiltre %>&kategori=hepsi" 
+                           class="cat-btn <%= seciliKategori === 'hepsi' ? 'active' : '' %>">
+                            <i class="fas fa-th-large me-2"></i> Tüm Kategoriler
+                        </a>
                     </div>
-                    <h5 class="fw-bold text-secondary">Sonuç Bulunamadı</h5>
-                    <p class="text-muted small">Seçtiğiniz kriterlere uygun aktif ihale yok.</p>
-                    <a href="/" class="btn btn-sm btn-dark px-4 rounded-pill">Filtreleri Temizle</a>
+                    
+                    <% categories.forEach(cat => { %>
+                        <div class="col-6 col-md-3 col-lg-2">
+                            <a href="/?durum=<%= seciliFiltre %>&kategori=<%= cat.category_id %>" 
+                               class="cat-btn <%= Number(seciliKategori) === cat.category_id ? 'active' : '' %>">
+                                <%= cat.name %>
+                            </a>
+                        </div>
+                    <% }) %>
                 </div>
             </div>
-        <% } %>
+        </div>
+    </div>
 
-        <% ihaleler.forEach(ihale => { %>
-            <% 
-            let minTeklif = ihale.en_yuksek_teklif ? Number(ihale.en_yuksek_teklif) + 1 : Number(ihale.start_price);
-            let fiyatFormat = (fiyat) => {
-                return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(fiyat);
-            };
+    <main class="container py-4">
+        
+        <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
+            <h4 class="fw-bold text-dark m-0">
+                <% if(seciliKategori !== 'hepsi' && seciliKatAd) { %>
+                    <span class="text-primary"><%= seciliKatAd.name %></span> <span class="text-muted fs-6">kategorisi</span>
+                <% } else { %>
+                    <span class="text-dark">Vitrin</span>
+                <% } %>
+            </h4>
+            <span class="text-muted small fw-bold"><%= ihaleler.length %> İlan Listelendi</span>
+        </div>
+
+        <div class="row g-4">
+            
+            <% if (ihaleler.length === 0) { %>
+                <div class="col-12 text-center py-5">
+                    <div class="mb-3 text-muted opacity-25">
+                        <i class="fas fa-box-open fa-4x"></i>
+                    </div>
+                    <h5 class="fw-bold text-secondary">İlan Bulunamadı</h5>
+                    <p class="text-muted small">Seçtiğiniz kriterlerde aktif bir ihale yok.</p>
+                    <a href="/" class="btn btn-primary btn-sm rounded-pill px-4">Tümünü Göster</a>
+                </div>
+            <% } %>
+
+            <% ihaleler.forEach(ihale => { 
+                let minTeklif = ihale.en_yuksek_teklif ? Number(ihale.en_yuksek_teklif) + 1 : Number(ihale.start_price);
+                let formatPara = (tutar) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(tutar);
             %>
+                <div class="col-md-6 col-lg-4 col-xl-3">
+                    <div class="card tender-card h-100">
+                        <div class="card-img-wrap">
+                            <% if (ihale.image_url) { %>
+                                <img src="/static/images/<%= ihale.image_url %>" class="w-100 h-100" style="object-fit: cover;">
+                            <% } else { %>
+                                <div class="d-flex align-items-center justify-content-center h-100 text-secondary">
+                                    <i class="fas fa-image fa-2x opacity-25"></i>
+                                </div>
+                            <% } %>
+                            
+                            <% if(ihale.Category) { %>
+                                <div class="position-absolute top-0 start-0 m-3">
+                                    <span class="badge bg-dark bg-opacity-75 fw-normal">
+                                        <%= ihale.Category.name %>
+                                    </span>
+                                </div>
+                            <% } %>
 
-            <div class="col-md-6 col-lg-4 col-xl-3"> <div class="card h-100 shadow-sm overflow-hidden">
-                    
-                    <div style="height: 200px; position: relative; background-color: #f8f9fa;">
-                        <% if (ihale.image_url) { %>
-                            <img src="/static/images/<%= ihale.image_url %>" class="w-100 h-100 object-fit-cover" style="object-fit: cover;">
-                        <% } else { %>
-                            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
-                                <i class="fas fa-camera fa-2x mb-2 opacity-25"></i>
-                                <small class="opacity-50">Görsel Yok</small>
-                            </div>
-                        <% } %>
-                        
-                        <% if(ihale.Category) { %>
-                            <div class="position-absolute top-0 start-0 m-2">
-                                <span class="badge bg-white text-dark shadow-sm fw-normal" style="font-size: 0.7rem;">
-                                    <%= ihale.Category.name %>
-                                </span>
-                            </div>
-                        <% } %>
-
-                        <div class="position-absolute top-0 end-0 m-2">
                             <% if (new Date(ihale.end_date) > new Date() && ihale.status == 1) { %>
-                                <span class="badge bg-danger shadow-sm animate-pulse" style="font-size: 0.7rem;">
+                                <span class="status-badge bg-danger text-white live-pulse">
                                     CANLI
                                 </span>
                             <% } else { %>
-                                <span class="badge bg-secondary shadow-sm" style="font-size: 0.7rem;">BİTTİ</span>
-                            <% } %>
-                        </div>
-                    </div>
-
-                    <div class="card-body d-flex flex-column">
-                        <h6 class="card-title text-dark fw-bold mb-1 text-truncate" title="<%= ihale.title %>">
-                            <%= ihale.title %>
-                        </h6>
-                        
-                        <div class="mt-auto pt-3">
-                            <div class="d-flex justify-content-between align-items-end mb-2">
-                                <div>
-                                    <small class="text-muted d-block" style="font-size: 10px; font-weight: 600;">GÜNCEL FİYAT</small>
-                                    <span class="text-primary fw-bold fs-5">
-                                        <%= fiyatFormat(ihale.en_yuksek_teklif ? ihale.en_yuksek_teklif : ihale.start_price) %> <small class="fs-6">₺</small>
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="bg-light rounded p-2 d-flex justify-content-between align-items-center mb-3 border">
-                                <small class="text-muted fw-bold" style="font-size: 10px;">⏳ KALAN</small>
-                                <span class="countdown-box text-danger fw-bold" style="font-size: 0.85rem;" data-endtime="<%= ihale.end_date %>">
-                                    --:--:--
+                                <span class="status-badge bg-secondary text-white">
+                                    BİTTİ
                                 </span>
-                            </div>
-
-                            <% if (new Date(ihale.end_date) > new Date() && ihale.status == 1) { %>
-                                <form action="/bid" method="post" class="d-flex gap-2 bid-form">
-                                    <input type="hidden" name="tender_id" value="<%= ihale.tender_id %>">
-                                    <input type="number" name="amount" class="form-control form-control-sm" placeholder="+<%= fiyatFormat(minTeklif) %>" required min="<%= minTeklif %>">
-                                    <button type="submit" class="btn btn-dark btn-sm fw-bold px-3 btn-bid">Ver</button>
-                                </form>
-                            <% } else { %>
-                                <button class="btn btn-light text-muted w-100 btn-sm disabled border" disabled>Sona Erdi</button>
                             <% } %>
                         </div>
-                    </div>
 
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title fw-bold text-dark mb-1 text-truncate" title="<%= ihale.title %>">
+                                <%= ihale.title %>
+                            </h6>
+                            
+                            <div class="mt-auto pt-3">
+                                <p class="mb-1 text-muted small fw-bold" style="font-size: 10px;">GÜNCEL FİYAT</p>
+                                <h4 class="fw-bold text-primary mb-3">
+                                    <%= formatPara(ihale.en_yuksek_teklif ? ihale.en_yuksek_teklif : ihale.start_price) %> <small class="fs-6">₺</small>
+                                </h4>
+
+                                <div class="bg-light rounded p-2 d-flex justify-content-between align-items-center mb-3 border">
+                                    <i class="far fa-clock text-muted"></i>
+                                    <span class="countdown fw-bold text-dark small" data-time="<%= ihale.end_date %>">--:--:--</span>
+                                </div>
+
+                                <% if (new Date(ihale.end_date) > new Date() && ihale.status == 1) { %>
+                                    <form action="/bid" method="post" class="d-flex gap-2 bid-form">
+                                        <input type="hidden" name="tender_id" value="<%= ihale.tender_id %>">
+                                        <input type="number" name="amount" class="form-control form-control-sm" placeholder="Teklif Ver" min="<%= minTeklif %>" required>
+                                        <button class="btn btn-dark btn-sm px-3" type="submit">Ver</button>
+                                    </form>
+                                <% } else { %>
+                                    <button class="btn btn-secondary btn-sm w-100 disabled" disabled>Süre Doldu</button>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        <% }) %>
-        
+            <% }) %>
+
         </div>
     </main>
 
-    <footer class="text-center mt-5 border-top pt-4">
-        <div class="container">
-            <small>&copy; 2025 İhale Paneli. <span class="text-muted">Modern Altyapı v3.0</span></small>
-        </div>
+    <footer class="text-center">
+        <small>&copy; 2025 İhale Sistemi. Tüm hakları saklıdır.</small>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function updateTimers() {
-            const timers = document.querySelectorAll('.countdown-box');
-            timers.forEach(timer => {
-                const endTime = new Date(timer.getAttribute('data-endtime')).getTime();
+        // Sayaç
+        setInterval(() => {
+            document.querySelectorAll('.countdown').forEach(el => {
+                const end = new Date(el.dataset.time).getTime();
                 const now = new Date().getTime();
-                const distance = endTime - now;
+                const diff = end - now;
 
-                if (distance < 0) {
-                    timer.innerHTML = "SÜRE DOLDU";
-                    timer.classList.remove('text-danger');
-                    timer.classList.add('text-secondary');
-                    // Butonu pasife çekme mantığı backend'den de geliyor ama görsel olarak burada da kilitlenebilir.
+                if (diff < 0) {
+                    el.innerText = "SÜRE DOLDU";
+                    el.classList.add('text-danger');
                 } else {
-                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                    if (days > 0) {
-                        timer.innerHTML = `${days}g ${hours}s ${minutes}dk`;
-                    } else {
-                        timer.innerHTML = `${hours}:${minutes}:${seconds}`;
-                    }
+                    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const s = Math.floor((diff % (1000 * 60)) / 1000);
+                    el.innerText = d > 0 ? `${d}g ${h}s ${m}dk` : `${h}:${m}:${s}`;
                 }
             });
-        }
-        setInterval(updateTimers, 1000);
-        updateTimers();
+        }, 1000);
 
-        // Butona basınca yükleniyor animasyonu
+        // Buton Efekti
         document.querySelectorAll('.bid-form').forEach(f => {
             f.addEventListener('submit', function() {
-                const btn = this.querySelector('.btn-bid');
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-                btn.disabled = true;
+                const b = this.querySelector('button');
+                b.disabled = true;
+                b.innerHTML = '...';
             });
         });
     </script>
