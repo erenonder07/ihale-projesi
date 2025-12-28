@@ -14,15 +14,21 @@ const User = sequelize.define('Users', {
     },
     email: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
+        unique: true, // <-- AYNI E-POSTA İLE KAYIT ENGELLENDİ
+        validate: {
+            isEmail: true // E-posta formatını kontrol eder
+        }
     },
     phone: {
         type: DataTypes.STRING,
-        allowNull: true
+        allowNull: true,
+        unique: true // <-- AYNI TELEFON İLE KAYIT ENGELLENDİ
     },
     tckn: {
         type: DataTypes.STRING,
-        allowNull: true
+        allowNull: true,
+        unique: true // <-- AYNI TC İLE KAYIT ENGELLENDİ
     },
     password: {
         type: DataTypes.STRING,

@@ -9,7 +9,7 @@ router.get("/login", function(req, res) {
     res.render("login"); 
 });
 
-// 2. Kayıt Olma İşlemi
+// 2. Kayıt Olma İşlemi (GÜNCELLENDİ)
 router.post("/register", async function(req, res) {
     const name = req.body.full_name;
     const mail = req.body.email;
@@ -18,6 +18,7 @@ router.post("/register", async function(req, res) {
     const pass = req.body.password;
 
     try {
+        // Kullanıcıyı oluşturmayı dene
         await User.create({
             full_name: name,
             email: mail,
@@ -26,8 +27,31 @@ router.post("/register", async function(req, res) {
             password: pass
         });
         
+        // Başarılıysa giriş sayfasına yönlendir
         res.redirect("/login"); 
+
     } catch(err) {
+        // --- ÖZEL HATA YAKALAMA KISMI ---
+        
+        // Eğer veritabanından "Eşsizlik Hatası" (Unique Constraint) gelirse:
+        if (err.name === 'SequelizeUniqueConstraintError') {
+            let hataMesaji = "Bu bilgilerle zaten bir kayıt mevcut!";
+
+            // Hangi alanın çakıştığını kontrol edip mesajı özelleştiriyoruz
+            if (err.fields.email) hataMesaji = "Bu E-posta adresi zaten kullanılıyor.";
+            else if (err.fields.phone) hataMesaji = "Bu Telefon numarası zaten kullanılıyor.";
+            else if (err.fields.tckn) hataMesaji = "Bu TC Kimlik numarası zaten kullanılıyor.";
+
+            // Kullanıcıya alert verip geri yönlendiren basit bir script gönderiyoruz
+            return res.send(`
+                <script>
+                    alert("${hataMesaji}");
+                    window.location.href = "/login";
+                </script>
+            `);
+        }
+
+        // Başka bir hata varsa konsola yaz ve ekrana bas
         console.log(err);
         res.send("Kayıt Hatası: " + err.message);
     }
@@ -51,12 +75,17 @@ router.post("/login", async function(req, res) {
             req.session.user_id = user.user_id; 
             req.session.ad_soyad = user.full_name;
             req.session.email = user.email; 
-            req.session.phone = user.phone; // Telefonu da hafızaya alıyoruz
+            req.session.phone = user.phone; 
             
             console.log("Giriş Başarılı: " + user.full_name);
             res.redirect("/dashboard");
         } else {
-            res.send("<h1>Hata</h1><p>E-posta veya şifre yanlış.</p><a href='/login'>Tekrar Dene</a>");
+            res.send(`
+                <script>
+                    alert("E-posta veya şifre hatalı!");
+                    window.location.href = "/login";
+                </script>
+            `);
         }
 
     } catch(err) {
@@ -65,16 +94,13 @@ router.post("/login", async function(req, res) {
     }
 });
 
-// 4. GÜVENLİ ÇIKIŞ İŞLEMİ (LOGOUT) - YENİ EKLENDİ
+// 4. GÜVENLİ ÇIKIŞ İŞLEMİ
 router.get("/logout", function(req, res) {
-    // Oturumu tamamen yok et
     req.session.destroy((err) => {
         if (err) {
             console.log(err);
         }
-        // Çerezi de temizle
         res.clearCookie('connect.sid'); 
-        // Giriş sayfasına gönder
         res.redirect("/login");
     });
 });
