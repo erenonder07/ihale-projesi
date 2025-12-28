@@ -11,18 +11,19 @@ const Category = require("../models/category");
 const multer = require("multer");
 const upload = multer({ dest: "./public/images" }); 
 
-// 1. DASHBOARD (DÜZELTİLDİ: Veriler tek tek gönderiliyor)
+// 1. DASHBOARD (DÜZELTİLDİ)
 router.get("/dashboard", function(req, res) {
     // Giriş kontrolü
     if (!req.session.user_id) return res.redirect("/login");
     
-    // GÜNCELLEME BURADA: Session içindeki verileri net bir şekilde sayfaya gönderiyoruz
+    // HATA BURADAYDI: 'fullname' değil 'ad_soyad' olarak göndermeliyiz.
+    // Çünkü senin dashboard.ejs dosyan <%= user.ad_soyad %> bekliyor.
     res.render("dashboard", { 
         user: {
-            id: req.session.user_id,
-            fullname: req.session.ad_soyad,
-            email: req.session.email,  // E-posta artık gidecek
-            phone: req.session.phone   // Telefon artık gidecek
+            user_id: req.session.user_id,
+            ad_soyad: req.session.ad_soyad, // <-- İSMİN GERİ GELMESİ İÇİN BU GEREKLİ
+            email: req.session.email,       // E-posta artık gidecek
+            phone: req.session.phone        // Telefon artık gidecek
         }
     });
 });
@@ -83,13 +84,13 @@ router.get("/", async function(req, res) {
             return ihaleObj;
         });
         
-        // Anasayfaya da kullanıcı bilgilerini tam gönderelim
+        // Anasayfaya da bilgileri doğru isimlerle gönderelim
         res.render("home", {
             ihaleler: islenmisIhaleler,
             categories: categories,
             user: {
-                id: req.session.user_id,
-                fullname: req.session.ad_soyad,
+                user_id: req.session.user_id,
+                ad_soyad: req.session.ad_soyad, // <-- Burada da düzelttim
                 email: req.session.email,
                 phone: req.session.phone
             },
@@ -158,12 +159,13 @@ router.get("/my-tenders", async function(req, res) {
             ],
             order: [['tender_id', 'DESC']]
         });
-        // Burada da user bilgilerini tam gönderelim
+        
+        // İlanlarım sayfasında da doğru isimleri kullanalım
         res.render("my-tenders", { 
             tenders: myTenders, 
             user: {
-                id: req.session.user_id,
-                fullname: req.session.ad_soyad,
+                user_id: req.session.user_id,
+                ad_soyad: req.session.ad_soyad, // <-- Burada da düzelttim
                 email: req.session.email,
                 phone: req.session.phone
             }
