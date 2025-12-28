@@ -4,29 +4,48 @@ const { Op } = require("sequelize");
 
 // MODELLER
 const Tender = require("../models/tender");
-const User = require("../models/user");
+const User = require("../models/user"); //
 const Bid = require("../models/bid");
 const Category = require("../models/category"); 
 
 const multer = require("multer");
 const upload = multer({ dest: "./public/images" }); 
 
-// 1. DASHBOARD ROTASI
-router.get("/dashboard", function(req, res) {
+// ==========================================================
+// 1. DASHBOARD (KESİN ÇÖZÜM: VERİTABANINDAN ÇEKME)
+// ==========================================================
+router.get("/dashboard", async function(req, res) {
+    // Giriş kontrolü
     if (!req.session.user_id) return res.redirect("/login");
     
-    // DÜZELTME: Değişken adı 'ad_soyad' olarak gönderiliyor.
-    res.render("dashboard", { 
-        user: {
-            user_id: req.session.user_id,
-            ad_soyad: req.session.ad_soyad, // <-- EJS dosyası bunu bekliyor
-            email: req.session.email,       // E-posta
-            phone: req.session.phone        // Telefon
+    try {
+        // HATA ŞANSINI SIFIRLAMAK İÇİN:
+        // Kullanıcıyı doğrudan veritabanından buluyoruz.
+        // Session hafızasına güvenmek yerine taze veri çekiyoruz.
+        const user = await User.findByPk(req.session.user_id);
+
+        if (user) {
+            res.render("dashboard", { 
+                user: {
+                    user_id: user.user_id,
+                    ad_soyad: user.full_name, // Veritabanındaki 'full_name' -> EJS'deki 'ad_soyad'
+                    email: user.email,        // Veritabanından gelen e-posta
+                    phone: user.phone         // Veritabanından gelen telefon
+                }
+            });
+        } else {
+            // Kullanıcı veritabanında bulunamazsa çıkış yap
+            res.redirect("/logout");
         }
-    });
+    } catch (err) {
+        console.log(err);
+        res.redirect("/login");
+    }
 });
 
+// ==========================================================
 // 2. YENİ İLAN SAYFASI
+// ==========================================================
 router.get("/yeni-ilan", async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
     
@@ -34,7 +53,9 @@ router.get("/yeni-ilan", async function(req, res) {
     res.render("new-tender", { categories: categories });
 });
 
+// ==========================================================
 // 3. ANASAYFA
+// ==========================================================
 router.get("/", async function(req, res) {            
     if (!req.session.user_id) return res.redirect("/login");
 
@@ -43,6 +64,8 @@ router.get("/", async function(req, res) {
         const kategoriId = req.query.kategori;
         
         const categories = await Category.findAll();
+        // Anasayfada da kullanıcı adının görünmesi için veriyi çekiyoruz
+        const currentUser = await User.findByPk(req.session.user_id);
 
         let whereKosulu = {}; 
         const now = new Date(); 
@@ -80,15 +103,14 @@ router.get("/", async function(req, res) {
             return ihaleObj;
         });
         
-        // Anasayfaya da doğru isimlerle gönderiyoruz
         res.render("home", {
             ihaleler: islenmisIhaleler,
             categories: categories,
             user: {
-                user_id: req.session.user_id,
-                ad_soyad: req.session.ad_soyad, // <-- Düzeltildi
-                email: req.session.email,
-                phone: req.session.phone
+                // Anasayfa menüsü için gerekli bilgiler
+                ad_soyad: currentUser ? currentUser.full_name : "Misafir",
+                email: currentUser ? currentUser.email : "",
+                phone: currentUser ? currentUser.phone : ""
             },
             seciliFiltre: durum || 'tumu',
             seciliKategori: kategoriId || 'hepsi'
@@ -100,7 +122,9 @@ router.get("/", async function(req, res) {
     }
 });
 
+// ==========================================================
 // 4. İHALE EKLEME
+// ==========================================================
 router.post("/add-tender", upload.single("resim"), async function(req, res) { 
     if (!req.session.user_id) return res.redirect("/login");
 
@@ -122,7 +146,9 @@ router.post("/add-tender", upload.single("resim"), async function(req, res) {
     }
 });
 
+// ==========================================================
 // 5. TEKLİF VERME
+// ==========================================================
 router.post("/bid", async function(req, res) {           
     if (!req.session.user_id) return res.send("Giriş yapmalısınız!");
     try {
@@ -143,7 +169,9 @@ router.post("/bid", async function(req, res) {
     }
 });
 
+// ==========================================================
 // 6. İLANLARIM
+// ==========================================================
 router.get("/my-tenders", async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
     try {
@@ -156,14 +184,13 @@ router.get("/my-tenders", async function(req, res) {
             order: [['tender_id', 'DESC']]
         });
         
-        // İlanlarım sayfasında da doğru isimler
+        // Kullanıcıyı veritabanından çekip gönderiyoruz
+        const user = await User.findByPk(req.session.user_id);
+
         res.render("my-tenders", { 
             tenders: myTenders, 
             user: {
-                user_id: req.session.user_id,
-                ad_soyad: req.session.ad_soyad, // <-- Düzeltildi
-                email: req.session.email,
-                phone: req.session.phone
+                ad_soyad: user ? user.full_name : "Kullanıcı"
             }
         });
     } catch(err) {
@@ -171,7 +198,9 @@ router.get("/my-tenders", async function(req, res) {
     }
 });
 
+// ==========================================================
 // 7. ÇIKIŞ
+// ==========================================================
 router.get("/logout", function(req, res) {
     req.session.destroy(() => {
         res.clearCookie('connect.sid'); 
