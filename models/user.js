@@ -15,20 +15,20 @@ const User = sequelize.define('Users', {
     email: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true, // <-- AYNI E-POSTA İLE KAYIT ENGELLENDİ
+        unique: true,
         validate: {
-            isEmail: true // E-posta formatını kontrol eder
+            isEmail: true
         }
     },
     phone: {
         type: DataTypes.STRING,
-        allowNull: true,
-        unique: true // <-- AYNI TELEFON İLE KAYIT ENGELLENDİ
+        allowNull: false, // Telefon da zorunlu olsun
+        unique: true
     },
     tckn: {
-        type: DataTypes.STRING,
-        allowNull: true,
-        unique: true // <-- AYNI TC İLE KAYIT ENGELLENDİ
+        type: DataTypes.STRING(11), // Standart 11 hane
+        allowNull: false, // <--- ARTIK ZORUNLU (False yaptık)
+        unique: true
     },
     password: {
         type: DataTypes.STRING,

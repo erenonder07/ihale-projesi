@@ -188,12 +188,20 @@
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label">TC Kimlik (Opsiyonel)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted"><i class="fas fa-id-card"></i></span>
-                                    <input type="text" name="tckn" class="form-control border-start-0" placeholder="11 Hane">
+                                <label class="form-label">TC Kimlik No</label> <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 rounded-start-3 text-muted">
+                                <i class="fas fa-id-card"></i>
+                                </span>
+                                <input type="text" name="tckn" class="form-control border-start-0" 
+                                placeholder="11 Haneli TC Numaranız" 
+                                required 
+                                minlength="11" 
+                                maxlength="11" 
+                                pattern="\d*" 
+                                title="Lütfen 11 haneli TC numaranızı giriniz">
                                 </div>
                             </div>
+
 
                             <div class="col-12">
                                 <label class="form-label">Şifre Belirle</label>
