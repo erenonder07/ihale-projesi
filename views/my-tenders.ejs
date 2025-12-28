@@ -10,7 +10,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
 
-        /* --- YENİ LOGO TASARIMI --- */
+        /* --- LOGO TASARIMI --- */
         .navbar-brand {
             font-family: 'Outfit', sans-serif;
             letter-spacing: -0.5px;
@@ -19,47 +19,21 @@
             gap: 12px;
             text-decoration: none;
         }
-
         .brand-icon-box {
-            width: 42px;
-            height: 42px;
+            width: 42px; height: 42px;
             background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            color: white;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            color: white; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
             font-size: 1.2rem;
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
             transition: transform 0.3s ease;
         }
-
-        .navbar-brand:hover .brand-icon-box {
-            transform: rotate(-10deg) scale(1.05);
-        }
-
-        .brand-text-main {
-            font-weight: 800;
-            font-size: 1.35rem;
-            color: white;
-            line-height: 1;
-        }
-
-        .brand-text-sub {
-            font-weight: 300;
-            color: rgba(255,255,255,0.6);
-            font-size: 0.9rem;
-        }
-        /* --------------------------- */
-
-        .tender-card {
-            border: none;
-            border-radius: 12px;
-            overflow: hidden;
-            transition: transform 0.2s;
-        }
+        .navbar-brand:hover .brand-icon-box { transform: rotate(-10deg) scale(1.05); }
+        .brand-text-main { font-weight: 800; font-size: 1.35rem; color: white; line-height: 1; }
+        .brand-text-sub { font-weight: 300; color: rgba(255,255,255,0.6); font-size: 0.9rem; }
+        
+        .tender-card { border: none; border-radius: 12px; overflow: hidden; transition: transform 0.2s; }
         .tender-card:hover { transform: translateY(-3px); }
-        .table-hover tbody tr:hover { background-color: #f1f3f5; }
         .user-avatar {
             width: 32px; height: 32px;
             background-color: #e9ecef; color: #495057;
@@ -74,16 +48,14 @@
     <nav class="navbar navbar-dark bg-dark mb-4 shadow-sm py-3">
         <div class="container">
             <a class="navbar-brand" href="/dashboard">
-                <div class="brand-icon-box">
-                    <i class="fas fa-gavel"></i>
-                </div>
+                <div class="brand-icon-box"><i class="fas fa-gavel"></i></div>
                 <div>
                     <span class="brand-text-main">İHALE</span>
                     <span class="brand-text-sub">SİSTEMİ</span>
                 </div>
             </a>
             <a href="/dashboard" class="btn btn-sm btn-outline-light rounded-pill px-3 fw-bold border-2">
-                <i class="fas fa-arrow-left me-1"></i> Panele Dön
+               <i class="fas fa-arrow-left me-1"></i> Panele Dön
             </a>
         </div>
     </nav>
@@ -108,9 +80,7 @@
                 <% 
                    const now = new Date();
                    const endDate = new Date(tender.end_date);
-                   const isExpired = endDate < now; // Süre doldu mu?
-                   
-                   // Eğer süre dolduysa veya status 0 ise Pasif göster
+                   const isExpired = endDate < now; 
                    const isActive = tender.status && !isExpired;
                 %>
 
@@ -129,23 +99,17 @@
                                 <div>
                                     <h5 class="mb-0 fw-bold text-dark"><%= tender.title %></h5>
                                     <small class="text-muted d-block">Başlangıç: <%= tender.start_price %> ₺</small>
-                                    
                                     <small class="<%= isExpired ? 'text-danger fw-bold' : 'text-success' %>" style="font-size: 11px;">
                                         <i class="fas fa-clock"></i> 
                                         <%= endDate.toLocaleString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) %>
                                     </small>
                                 </div>
                             </div>
-                            
                             <div>
                                 <% if (isActive) { %>
-                                    <span class="badge bg-success">
-                                        <i class="fas fa-check-circle"></i> Yayında
-                                    </span>
+                                    <span class="badge bg-success"><i class="fas fa-check-circle"></i> Yayında</span>
                                 <% } else { %>
-                                    <span class="badge bg-secondary">
-                                        <i class="fas fa-lock"></i> Süre Doldu
-                                    </span>
+                                    <span class="badge bg-secondary"><i class="fas fa-lock"></i> Süre Doldu</span>
                                 <% } %>
                             </div>
                         </div>
@@ -166,13 +130,9 @@
                                                 <tr class="<%= index === 0 && isExpired ? 'table-success' : '' %>"> 
                                                     <td class="ps-4">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="user-avatar bg-primary text-white">
-                                                                <i class="fas fa-user"></i>
-                                                            </div>
+                                                            <div class="user-avatar bg-primary text-white"><i class="fas fa-user"></i></div>
                                                             <div>
-                                                                <span class="fw-bold text-dark d-block">
-                                                                    <%= bid.User ? bid.User.full_name : 'Bilinmiyor' %>
-                                                                </span>
+                                                                <span class="fw-bold text-dark d-block"><%= bid.User ? bid.User.full_name : 'Bilinmiyor' %></span>
                                                                 <% if(index === 0 && isExpired) { %>
                                                                     <span class="badge bg-warning text-dark" style="font-size: 10px;">🏆 KAZANAN</span>
                                                                 <% } %>
@@ -201,9 +161,23 @@
                             <% } %>
                         </div>
                         
-                        <div class="card-footer bg-light text-muted small d-flex justify-content-between">
-                            <span>Oluşturulma: <%= tender.createdAt ? new Date(tender.createdAt).toLocaleDateString('tr-TR') : 'Tarih Yok' %></span>
-                            <span>Toplam <%= tender.Bids ? tender.Bids.length : 0 %> Teklif</span>
+                        <div class="card-footer bg-light p-3 d-flex justify-content-between align-items-center">
+                            <small class="text-muted fw-bold">
+                                <i class="far fa-calendar-alt me-1"></i>
+                                <%= tender.createdAt ? new Date(tender.createdAt).toLocaleDateString('tr-TR') : 'Tarih Yok' %>
+                            </small>
+                            
+                            <div class="d-flex gap-2">
+                                <a href="/duzenle/<%= tender.tender_id %>" class="btn btn-outline-primary btn-sm px-3 fw-bold">
+                                    <i class="fas fa-pen"></i> Düzenle
+                                </a>
+
+                                <form action="/sil/<%= tender.tender_id %>" method="post" onsubmit="return confirm('Bu ilanı silmek istediğinize emin misiniz? Bu işlem geri alınamaz!');">
+                                    <button type="submit" class="btn btn-danger btn-sm px-3 fw-bold">
+                                        <i class="fas fa-trash-alt"></i> Sil
+                                    </button>
+                                </form>
+                            </div>
                         </div>
 
                     </div>
