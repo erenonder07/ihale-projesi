@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require("../data/connection"); 
 
+
 const Tender = sequelize.define('Tenders', {
     tender_id: {
         type: DataTypes.INTEGER,
@@ -30,7 +31,7 @@ const Tender = sequelize.define('Tenders', {
     },
     status: {
         type: DataTypes.INTEGER,
-        defaultValue: 1
+        defaultValue: 1   //ilan açıldığında aktif
     }
 });
 

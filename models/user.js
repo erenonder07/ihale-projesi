@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require("../data/connection"); 
 
+
 const User = sequelize.define('Users', {
     user_id: {
         type: DataTypes.INTEGER,
@@ -22,12 +23,12 @@ const User = sequelize.define('Users', {
     },
     phone: {
         type: DataTypes.STRING,
-        allowNull: false, // Telefon da zorunlu olsun
+        allowNull: false, 
         unique: true
     },
     tckn: {
-        type: DataTypes.STRING(11), // Standart 11 hane
-        allowNull: false, // <--- ARTIK ZORUNLU (False yaptık)
+        type: DataTypes.STRING(11), 
+        allowNull: false, 
         unique: true
     },
     password: {
@@ -35,5 +36,6 @@ const User = sequelize.define('Users', {
         allowNull: false
     }
 });
+
 
 module.exports = User;

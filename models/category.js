@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require("../data/connection"); 
 
+
 const Category = sequelize.define('Categories', {
     category_id: {
         type: DataTypes.INTEGER,

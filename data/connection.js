@@ -1,21 +1,21 @@
 const Sequelize = require('sequelize');
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME,     // Veritabanı adı (Environment'tan)
-  process.env.DB_USER,     // Kullanıcı adı (Environment'tan)
-  process.env.DB_PASSWORD, // Şifre (Environment'tan)
+  process.env.DB_NAME,     
+  process.env.DB_USER,     
+  process.env.DB_PASSWORD, 
   {
-    host: process.env.DB_HOST, // Host adresi
-    port: process.env.DB_PORT, // Port (20540)
+    host: process.env.DB_HOST, 
+    port: process.env.DB_PORT, 
     dialect: 'mysql',
     dialectOptions: {
       ssl: {
         require: true,
-        rejectUnauthorized: false // Aiven gibi bulut sağlayıcılar için SSL ayarı
+        rejectUnauthorized: false // Aiven 
       }
     },
     define: {
-      timestamps: false // Senin ayarın
+      timestamps: false // tarih
     }
   }
 );
