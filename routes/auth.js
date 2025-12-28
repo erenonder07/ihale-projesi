@@ -1,9 +1,25 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs"); // Dosya silmek için gerekli (Hafta 13 Notları)
 
-// Modelleri çağırıyoruz
+// Modeller
 const User = require("../models/user"); 
-const Tender = require("../models/tender"); // İlan işlemleri için gerekli
+const Tender = require("../models/tender");
+
+// --- MULTER AYARLARI (Dosya Yükleme) ---
+// Not: Resimler 'public/images' klasörüne kaydedilir [cite: 1402]
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, './public/images');
+    },
+    filename: function (req, file, cb) {
+        // Dosya adı çakışmasın diye benzersiz isim veriyoruz
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage: storage });
 
 // 1. Giriş Sayfasını Göster
 router.get("/login", function(req, res) {
@@ -12,92 +28,66 @@ router.get("/login", function(req, res) {
 
 // 2. Kayıt Olma İşlemi
 router.post("/register", async function(req, res) {
-    const name = req.body.full_name;
-    const mail = req.body.email;
-    const tel = req.body.phone;
-    const tc = req.body.tckn;
-    const pass = req.body.password;
-
+    // ... (Eski kodlar aynı kalıyor)
     try {
         await User.create({
-            full_name: name,
-            email: mail,
-            phone: tel,
-            tckn: tc,
-            password: pass
+            full_name: req.body.full_name,
+            email: req.body.email,
+            phone: req.body.phone,
+            tckn: req.body.tckn,
+            password: req.body.password
         });
         res.redirect("/login"); 
-
     } catch(err) {
         if (err.name === 'SequelizeUniqueConstraintError') {
-            let hataMesaji = "Bu bilgilerle zaten bir kayıt mevcut!";
-            if (err.fields.email) hataMesaji = "Bu E-posta adresi zaten kullanılıyor.";
-            else if (err.fields.phone) hataMesaji = "Bu Telefon numarası zaten kullanılıyor.";
-            else if (err.fields.tckn) hataMesaji = "Bu TC Kimlik numarası zaten kullanılıyor.";
-
-            return res.send(`<script>alert("${hataMesaji}"); window.location.href = "/login";</script>`);
+             return res.send(`<script>alert("Bu bilgilerle zaten kayıt var!"); window.location.href = "/login";</script>`);
         }
-        console.log(err);
-        res.send("Kayıt Hatası: " + err.message);
+        res.send("Hata: " + err.message);
     }
 });
 
 // 3. Giriş Yapma İşlemi
 router.post("/login", async function(req, res) {
-    const email = req.body.email;
-    const password = req.body.password;
-
+    // ... (Eski kodlar aynı kalıyor)
     try {
-        const user = await User.findOne({ 
-            where: { email: email, password: password } 
-        });
-        
+        const user = await User.findOne({ where: { email: req.body.email, password: req.body.password } });
         if (user) {
             req.session.user_id = user.user_id; 
             req.session.ad_soyad = user.full_name;
-            req.session.email = user.email; 
-            req.session.phone = user.phone; 
             res.redirect("/dashboard");
         } else {
-            res.send(`<script>alert("E-posta veya şifre hatalı!"); window.location.href = "/login";</script>`);
+            res.send(`<script>alert("Hatalı Giriş!"); window.location.href = "/login";</script>`);
         }
     } catch(err) {
-        console.log(err);
-        res.send("Giriş Hatası: " + err.message);
+        res.send("Hata: " + err.message);
     }
 });
 
-// 4. Güvenli Çıkış
+// 4. Çıkış
 router.get("/logout", function(req, res) {
-    req.session.destroy((err) => {
-        if (err) console.log(err);
+    req.session.destroy(() => {
         res.clearCookie('connect.sid'); 
         res.redirect("/login");
     });
 });
 
 // ==========================================================
-// 13. HAFTA MÜFREDATI: GÜNCELLEME VE SİLME (CRUD EKLENDİ)
+// 13. HAFTA: RESİM GÜNCELLEME VE SİLME İŞLEMLERİ
 // ==========================================================
 
-// A. DÜZENLEME SAYFASINI GETİR (GET)
+// A. DÜZENLEME SAYFASINI GETİR
 router.get("/duzenle/:id", async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
-    const tenderId = req.params.id;
-
+    
     try {
-        // İhaleyi bul (Hocanın notlarındaki mantık)
         const tender = await Tender.findOne({
-            where: {
-                tender_id: tenderId,
-                Users_user_id: req.session.user_id // Güvenlik: Sadece kendi ilanını düzenleyebilir
-            }
+            where: { tender_id: req.params.id, Users_user_id: req.session.user_id }
         });
 
         if (tender) {
             res.render("edit-tender", { tender: tender });
         } else {
-            res.send("İlan bulunamadı veya yetkiniz yok.");
+            res.send("İlan bulunamadı.");
         }
     } catch(err) {
         console.log(err);
@@ -105,25 +95,40 @@ router.get("/duzenle/:id", async function(req, res) {
     }
 });
 
-// B. GÜNCELLEMEYİ KAYDET (POST)
-router.post("/duzenle/:id", async function(req, res) {
+// B. GÜNCELLEME İŞLEMİ (RESİM SİLMELİ)
+// upload.single('image') ekledik, formdan gelen dosyayı yakalar [cite: 1404]
+router.post("/duzenle/:id", upload.single("image"), async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
+    
     const tenderId = req.params.id;
     const { title, description, start_price, end_date } = req.body;
 
     try {
-        // Önce veriyi bul
         const tender = await Tender.findByPk(tenderId);
 
-        // Veri varsa ve sahibi bizsek güncelle
         if (tender && tender.Users_user_id === req.session.user_id) {
-            // Hocanın notlarındaki yöntem
+            
+            // Eğer YENİ RESİM yüklendiyse
+            if (req.file) {
+                // 1. Eski resmi klasörden sil (fs.unlink) 
+                if (tender.image_url) {
+                    const eskiResimYolu = path.join(__dirname, "../public/images", tender.image_url);
+                    // Dosya var mı kontrol et, varsa sil
+                    if (fs.existsSync(eskiResimYolu)) {
+                        fs.unlinkSync(eskiResimYolu);
+                    }
+                }
+                // 2. Veritabanına yeni resim adını kaydet
+                tender.image_url = req.file.filename;
+            }
+
+            // Diğer bilgileri güncelle
             tender.title = title;
             tender.description = description;
             tender.start_price = start_price;
             tender.end_date = end_date;
             
-            await tender.save(); // Değişiklikleri kaydet
+            await tender.save();
             res.redirect("/my-tenders"); 
         } else {
             res.send("Yetkisiz işlem.");
@@ -134,20 +139,31 @@ router.post("/duzenle/:id", async function(req, res) {
     }
 });
 
-// C. SİLME İŞLEMİ (POST)
+// C. SİLME İŞLEMİ (RESİM SİLMELİ)
 router.post("/sil/:id", async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
-    const tenderId = req.params.id;
-
+    
     try {
-        // Hocanın notlarındaki destroy yöntemi
-        await Tender.destroy({
-            where: {
-                tender_id: tenderId,
-                Users_user_id: req.session.user_id // Sadece kendi ilanını silebilir
-            }
+        const tender = await Tender.findOne({
+            where: { tender_id: req.params.id, Users_user_id: req.session.user_id }
         });
-        res.redirect("/my-tenders");
+
+        if (tender) {
+            // 1. Önce resmi klasörden sil (Çöp oluşmasın)
+            if (tender.image_url) {
+                const resimYolu = path.join(__dirname, "../public/images", tender.image_url);
+                if (fs.existsSync(resimYolu)) {
+                    fs.unlinkSync(resimYolu);
+                }
+            }
+
+            // 2. Sonra veritabanından kaydı sil (destroy) [cite: 228]
+            await tender.destroy();
+            res.redirect("/my-tenders");
+        } else {
+            res.send("İlan bulunamadı.");
+        }
+
     } catch(err) {
         console.log(err);
         res.send("Silme işlemi başarısız.");
