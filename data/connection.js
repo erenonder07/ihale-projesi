@@ -1,6 +1,5 @@
 const Sequelize = require('sequelize');
 
-// Render Environment değişkenlerini kullanarak bağlantı oluşturuyoruz
 const sequelize = new Sequelize(
   process.env.DB_NAME,     // Veritabanı adı (Environment'tan)
   process.env.DB_USER,     // Kullanıcı adı (Environment'tan)
