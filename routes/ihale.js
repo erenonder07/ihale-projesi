@@ -11,19 +11,17 @@ const Category = require("../models/category");
 const multer = require("multer");
 const upload = multer({ dest: "./public/images" }); 
 
-// 1. DASHBOARD (DÜZELTİLDİ)
+// 1. DASHBOARD ROTASI
 router.get("/dashboard", function(req, res) {
-    // Giriş kontrolü
     if (!req.session.user_id) return res.redirect("/login");
     
-    // HATA BURADAYDI: 'fullname' değil 'ad_soyad' olarak göndermeliyiz.
-    // Çünkü senin dashboard.ejs dosyan <%= user.ad_soyad %> bekliyor.
+    // DÜZELTME: Değişken adı 'ad_soyad' olarak gönderiliyor.
     res.render("dashboard", { 
         user: {
             user_id: req.session.user_id,
-            ad_soyad: req.session.ad_soyad, // <-- İSMİN GERİ GELMESİ İÇİN BU GEREKLİ
-            email: req.session.email,       // E-posta artık gidecek
-            phone: req.session.phone        // Telefon artık gidecek
+            ad_soyad: req.session.ad_soyad, // <-- EJS dosyası bunu bekliyor
+            email: req.session.email,       // E-posta
+            phone: req.session.phone        // Telefon
         }
     });
 });
@@ -32,9 +30,7 @@ router.get("/dashboard", function(req, res) {
 router.get("/yeni-ilan", async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
     
-    // Kategorileri çek
     const categories = await Category.findAll();
-    
     res.render("new-tender", { categories: categories });
 });
 
@@ -84,13 +80,13 @@ router.get("/", async function(req, res) {
             return ihaleObj;
         });
         
-        // Anasayfaya da bilgileri doğru isimlerle gönderelim
+        // Anasayfaya da doğru isimlerle gönderiyoruz
         res.render("home", {
             ihaleler: islenmisIhaleler,
             categories: categories,
             user: {
                 user_id: req.session.user_id,
-                ad_soyad: req.session.ad_soyad, // <-- Burada da düzelttim
+                ad_soyad: req.session.ad_soyad, // <-- Düzeltildi
                 email: req.session.email,
                 phone: req.session.phone
             },
@@ -160,12 +156,12 @@ router.get("/my-tenders", async function(req, res) {
             order: [['tender_id', 'DESC']]
         });
         
-        // İlanlarım sayfasında da doğru isimleri kullanalım
+        // İlanlarım sayfasında da doğru isimler
         res.render("my-tenders", { 
             tenders: myTenders, 
             user: {
                 user_id: req.session.user_id,
-                ad_soyad: req.session.ad_soyad, // <-- Burada da düzelttim
+                ad_soyad: req.session.ad_soyad, // <-- Düzeltildi
                 email: req.session.email,
                 phone: req.session.phone
             }
