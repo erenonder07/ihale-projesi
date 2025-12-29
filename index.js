@@ -11,7 +11,7 @@ const ihaleRoutes = require("./routes/ihale");
 const User = require("./models/user");
 const Tender = require("./models/tender");
 const Bid = require("./models/bid");
-const Category = require("./models/category"); // Kategori Modeli
+const Category = require("./models/category"); 
 const sequelize = require("./data/connection");
 
 app.set('view engine', 'ejs'); 
@@ -25,40 +25,43 @@ app.use(session({
 }));
 
 app.use("/libs", express.static(path.join(__dirname, "node_modules")));
-app.use("/static", express.static(path.join(__dirname, "public")));
+app.use("/static", express.static(path.join(__dirname, "public")));            //kütph
 
-// --- TABLO İLİŞKİLERİ ---
+
 
 // 1. Kullanıcı - İhale İlişkisi
-User.hasMany(Tender, { foreignKey: 'Users_user_id', onDelete: "CASCADE" });
-Tender.belongsTo(User, { foreignKey: 'Users_user_id' });
+User.hasMany(Tender, { foreignKey: 'Users_user_id', onDelete: "CASCADE" });           //bir kullanıcının
+Tender.belongsTo(User, { foreignKey: 'Users_user_id' });                              //birden fazla ihalesi olabilir
 
 // 2. Kullanıcı - Teklif İlişkisi
-User.hasMany(Bid, { foreignKey: 'Users_user_id', onDelete: "CASCADE" });
-Bid.belongsTo(User, { foreignKey: 'Users_user_id' });
+User.hasMany(Bid, { foreignKey: 'Users_user_id', onDelete: "CASCADE" });               //bir kullanıcının
+Bid.belongsTo(User, { foreignKey: 'Users_user_id' });                            //birden fazla teklifi olabilir                        
 
 // 3. İhale - Teklif İlişkisi
-Tender.hasMany(Bid, { foreignKey: 'Tenders_tender_id', onDelete: "CASCADE" });
-Bid.belongsTo(Tender, { foreignKey: 'Tenders_tender_id' });
+Tender.hasMany(Bid, { foreignKey: 'Tenders_tender_id', onDelete: "CASCADE" });      //bir ihalenin
+Bid.belongsTo(Tender, { foreignKey: 'Tenders_tender_id' });                         //birden fazla teklifi olabilir 
 
 // 4. Kategori - İhale İlişkisi
 Category.hasMany(Tender, { 
     foreignKey: 'Categories_category_id', 
-    onDelete: "SET NULL" 
-});
+    onDelete: "SET NULL"                                                            //ilan silindiğinde kategori boş olur
+});                                                                                 //tüm kategorileri silmez
 Tender.belongsTo(Category, { foreignKey: 'Categories_category_id' });
 
 
-// --- VERİTABANI SENKRONİZASYONU ---
+
+// VERİTABANI SENKRONİZASYONU 
+
+
 async function syncDatabase() {
     try {
-        await sequelize.sync({ alter: true });   //burası önemli dikkat
-        console.log("✅ Tablolar senkronize edildi.");
+        await sequelize.sync({ alter: true });   //silip bastan kurmaması icin  //force: true
+        console.log("Tablolar senkronize edildi.");
 
-        // Kategorileri Kontrol Et ve Doldur
+        // kategorileri kontrol et ve doldur
         const count = await Category.count();
         if(count === 0) {
-            await Category.bulkCreate([
+            await Category.bulkCreate([   //toplu oluşturma //bulk
                 { name: "Elektronik" },
                 { name: "Vasıta" },
                 { name: "Emlak & Konut" },
@@ -72,16 +75,16 @@ async function syncDatabase() {
                 { name: "Sanayi & İş Makineleri" },
                 { name: "Diğer" }
             ]);
-            console.log("🚀 Genişletilmiş kategoriler eklendi.");
+            console.log("kategoriler eklendi.");
         }
 
     } catch (err) {
-        console.error("❌ Senkronizasyon Hatası:", err);
+        console.error(" Senkronizasyon Hatası:", err);
     }
 }
 syncDatabase();
 
-// Rotaları Aktif Et
+// Rotalar
 app.use(authRoutes); 
 app.use(ihaleRoutes); 
 

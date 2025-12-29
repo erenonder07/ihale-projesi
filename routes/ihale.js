@@ -11,30 +11,27 @@ const Category = require("../models/category");
 const multer = require("multer");
 const upload = multer({ dest: "./public/images" }); 
 
-// ==========================================================
-// 1. DASHBOARD (KESİN ÇÖZÜM: VERİTABANINDAN ÇEKME)
-// ==========================================================
+
+
 router.get("/dashboard", async function(req, res) {
     // Giriş kontrolü
     if (!req.session.user_id) return res.redirect("/login");
     
     try {
-        // HATA ŞANSINI SIFIRLAMAK İÇİN:
-        // Kullanıcıyı doğrudan veritabanından buluyoruz.
-        // Session hafızasına güvenmek yerine taze veri çekiyoruz.
+        
         const user = await User.findByPk(req.session.user_id);
 
         if (user) {
             res.render("dashboard", { 
                 user: {
                     user_id: user.user_id,
-                    ad_soyad: user.full_name, // Veritabanındaki 'full_name' -> EJS'deki 'ad_soyad'
-                    email: user.email,        // Veritabanından gelen e-posta
-                    phone: user.phone         // Veritabanından gelen telefon
+                    ad_soyad: user.full_name, // 
+                    email: user.email,        //            DB'DEN CEKTİGİMİZ  BİLGİLER
+                    phone: user.phone         //
                 }
             });
         } else {
-            // Kullanıcı veritabanında bulunamazsa çıkış yap
+            
             res.redirect("/logout");
         }
     } catch (err) {
@@ -43,9 +40,8 @@ router.get("/dashboard", async function(req, res) {
     }
 });
 
-// ==========================================================
-// 2. YENİ İLAN SAYFASI
-// ==========================================================
+
+
 router.get("/yeni-ilan", async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
     
@@ -53,9 +49,9 @@ router.get("/yeni-ilan", async function(req, res) {
     res.render("new-tender", { categories: categories });
 });
 
-// ==========================================================
-// 3. ANASAYFA
-// ==========================================================
+// -----------------------------------------------------------
+//  ANASAYFA
+
 router.get("/", async function(req, res) {            
     if (!req.session.user_id) return res.redirect("/login");
 
@@ -70,10 +66,10 @@ router.get("/", async function(req, res) {
         let whereKosulu = {}; 
         const now = new Date(); 
 
-        if (durum === 'aktif') {
-            whereKosulu.end_date = { [Op.gt]: now };
-            whereKosulu.status = 1;
-        } else if (durum === 'kapali') {
+        if (durum === 'aktif') {                                    //
+            whereKosulu.end_date = { [Op.gt]: now };            
+            whereKosulu.status = 1; 
+        } else if (durum === 'kapali')   {                 //       //ilan-aktif/kapali durumu
             whereKosulu[Op.or] = [
                 { end_date: { [Op.lt]: now } },
                 { status: 0 }
@@ -94,8 +90,8 @@ router.get("/", async function(req, res) {
         });
 
         const islenmisIhaleler = tenders.map(tender => {
-            const ihaleObj = tender.toJSON();
-            if (ihaleObj.Bids && ihaleObj.Bids.length > 0) {
+            const ihaleObj = tender.toJSON();                               //ihalede en_yuksek_teklif
+            if (ihaleObj.Bids && ihaleObj.Bids.length > 0) {             
                 ihaleObj.en_yuksek_teklif = Math.max(...ihaleObj.Bids.map(b => parseFloat(b.amount)));
             } else {
                 ihaleObj.en_yuksek_teklif = null;
@@ -122,11 +118,12 @@ router.get("/", async function(req, res) {
     }
 });
 
-// ==========================================================
-// 4. İHALE EKLEME
-// ==========================================================
+
+
+// İHALE EKLEME
+
 router.post("/add-tender", upload.single("resim"), async function(req, res) { 
-    if (!req.session.user_id) return res.redirect("/login");
+    if (!req.session.user_id) return res.redirect("/login");    //kimlik sorgusu
 
     try {
         await Tender.create({
@@ -146,11 +143,12 @@ router.post("/add-tender", upload.single("resim"), async function(req, res) {
     }
 });
 
-// ==========================================================
-// 5. TEKLİF VERME
-// ==========================================================
+
+
+//  TEKLİF VERME
+
 router.post("/bid", async function(req, res) {           
-    if (!req.session.user_id) return res.send("Giriş yapmalısınız!");
+    if (!req.session.user_id) return res.send("Giriş yapmalısınız");
     try {
         const ihale = await Tender.findByPk(req.body.tender_id);
         if (!ihale) return res.send("İhale bulunamadı!");
@@ -159,7 +157,7 @@ router.post("/bid", async function(req, res) {
 
         await Bid.create({
             amount: req.body.amount,
-            Users_user_id: req.session.user_id,
+            Users_user_id: req.session.user_id,             //kaydetme
             Tenders_tender_id: req.body.tender_id
         });
         res.redirect("/");
@@ -169,9 +167,9 @@ router.post("/bid", async function(req, res) {
     }
 });
 
-// ==========================================================
-// 6. İLANLARIM
-// ==========================================================
+
+//  İLANLARIM'M
+
 router.get("/my-tenders", async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
     try {
@@ -181,13 +179,13 @@ router.get("/my-tenders", async function(req, res) {
                 { model: Bid, include: [{ model: User }] },
                 { model: Category }
             ],
-            order: [['tender_id', 'DESC']]
+            order: [['tender_id', 'DESC']]     //sıralama "azalana göre"
         });
         
         // Kullanıcıyı veritabanından çekip gönderiyoruz
         const user = await User.findByPk(req.session.user_id);
 
-        res.render("my-tenders", { 
+        res.render("my-tenders", {    //ejs
             tenders: myTenders, 
             user: {
                 ad_soyad: user ? user.full_name : "Kullanıcı"
@@ -198,12 +196,12 @@ router.get("/my-tenders", async function(req, res) {
     }
 });
 
-// ==========================================================
-// 7. ÇIKIŞ
-// ==========================================================
+
+
+//  ÇIKIŞ
+
 router.get("/logout", function(req, res) {
     req.session.destroy(() => {
-        res.clearCookie('connect.sid'); 
         res.redirect("/login");
     });
 });

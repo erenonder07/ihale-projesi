@@ -2,14 +2,14 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs"); // Dosya silmek için gerekli (Hafta 13 Notları)
+const fs = require("fs"); // dosya silmek
 
-// Modeller
+
 const User = require("../models/user"); 
 const Tender = require("../models/tender");
 
-// --- MULTER AYARLARI (Dosya Yükleme) ---
-// Not: Resimler 'public/images' klasörüne kaydedilir [cite: 1402]
+// MULTER AYARLARI (Dosya Yükleme) 
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, './public/images');
@@ -19,18 +19,19 @@ const storage = multer.diskStorage({
         cb(null, Date.now() + path.extname(file.originalname));
     }
 });
+
 const upload = multer({ storage: storage });
 
-// 1. Giriş Sayfasını Göster
-router.get("/login", function(req, res) {
+
+router.get("/login", function(req, res) {  //login
     res.render("login"); 
 });
 
-// 2. Kayıt Olma İşlemi
-router.post("/register", async function(req, res) {
-    // ... (Eski kodlar aynı kalıyor)
+
+router.post("/register", async function(req, res) {   //register
+    
     try {
-        await User.create({
+        await User.create({   //user.js
             full_name: req.body.full_name,
             email: req.body.email,
             phone: req.body.phone,
@@ -39,48 +40,46 @@ router.post("/register", async function(req, res) {
         });
         res.redirect("/login"); 
     } catch(err) {
-        if (err.name === 'SequelizeUniqueConstraintError') {
+        if (err.name === 'SequelizeUniqueConstraintError') {   //zaten var
              return res.send(`<script>alert("Bu bilgilerle zaten kayıt var!"); window.location.href = "/login";</script>`);
         }
         res.send("Hata: " + err.message);
     }
 });
 
-// 3. Giriş Yapma İşlemi
+
 router.post("/login", async function(req, res) {
-    // ... (Eski kodlar aynı kalıyor)
+
     try {
         const user = await User.findOne({ where: { email: req.body.email, password: req.body.password } });
         if (user) {
-            req.session.user_id = user.user_id; 
-            req.session.ad_soyad = user.full_name;
+            req.session.user_id = user.user_id;            //hatır
+            req.session.ad_soyad = user.full_name;         //lama
             res.redirect("/dashboard");
         } else {
-            res.send(`<script>alert("Hatalı Giriş!"); window.location.href = "/login";</script>`);
+            res.send(`<script>alert("Hatali Giris!"); window.location.href = "/login";</script>`);
         }
     } catch(err) {
         res.send("Hata: " + err.message);
     }
 });
 
-// 4. Çıkış
-router.get("/logout", function(req, res) {
-    req.session.destroy(() => {
-        res.clearCookie('connect.sid'); 
+
+router.get("/logout", function(req, res) {       //log
+    req.session.destroy(() => {                  //out
+        
         res.redirect("/login");
     });
 });
 
-// ==========================================================
-// 13. HAFTA: RESİM GÜNCELLEME VE SİLME İŞLEMLERİ
-// ==========================================================
 
-// A. DÜZENLEME SAYFASINI GETİR
+
+// DÜZENLEME SAYFAS
 router.get("/duzenle/:id", async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
     
     try {
-        const tender = await Tender.findOne({
+        const tender = await Tender.findOne({                                               //GET
             where: { tender_id: req.params.id, Users_user_id: req.session.user_id }
         });
 
@@ -95,8 +94,7 @@ router.get("/duzenle/:id", async function(req, res) {
     }
 });
 
-// B. GÜNCELLEME İŞLEMİ (RESİM SİLMELİ)
-// upload.single('image') ekledik, formdan gelen dosyayı yakalar [cite: 1404]
+// B. GÜNCELLEME İŞLEMİ 
 router.post("/duzenle/:id", upload.single("image"), async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
     
@@ -105,15 +103,15 @@ router.post("/duzenle/:id", upload.single("image"), async function(req, res) {
 
     try {
         const tender = await Tender.findByPk(tenderId);
-
+                                                                                        //POST
         if (tender && tender.Users_user_id === req.session.user_id) {
             
-            // Eğer YENİ RESİM yüklendiyse
+            // YENİ RESİM yüklendiyse
             if (req.file) {
-                // 1. Eski resmi klasörden sil (fs.unlink) 
+                // Eski resmi klasörden sil
                 if (tender.image_url) {
                     const eskiResimYolu = path.join(__dirname, "../public/images", tender.image_url);
-                    // Dosya var mı kontrol et, varsa sil
+                    
                     if (fs.existsSync(eskiResimYolu)) {
                         fs.unlinkSync(eskiResimYolu);
                     }
@@ -131,15 +129,15 @@ router.post("/duzenle/:id", upload.single("image"), async function(req, res) {
             await tender.save();
             res.redirect("/my-tenders"); 
         } else {
-            res.send("Yetkisiz işlem.");
+            res.send("bulunamadi");
         }
     } catch(err) {
         console.log("Güncelleme Hatası:", err);
-        res.send("Hata oluştu.");
+        res.send("Hata");
     }
 });
 
-// C. SİLME İŞLEMİ (RESİM SİLMELİ)
+// C. SİLME İŞLEMİ
 router.post("/sil/:id", async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
     
@@ -149,24 +147,24 @@ router.post("/sil/:id", async function(req, res) {
         });
 
         if (tender) {
-            // 1. Önce resmi klasörden sil (Çöp oluşmasın)
+            //  önce resmi klasörden sil 
             if (tender.image_url) {
                 const resimYolu = path.join(__dirname, "../public/images", tender.image_url);
-                if (fs.existsSync(resimYolu)) {
+                if (fs.existsSync(resimYolu)) {    //KONTROL
                     fs.unlinkSync(resimYolu);
                 }
             }
 
-            // 2. Sonra veritabanından kaydı sil (destroy) [cite: 228]
+            // veritabanından kaydı sil (destroy) 
             await tender.destroy();
             res.redirect("/my-tenders");
         } else {
-            res.send("İlan bulunamadı.");
+            res.send("ilan bulunamadı.");
         }
 
     } catch(err) {
         console.log(err);
-        res.send("Silme işlemi başarısız.");
+        res.send("silme işlemi başarısız.");
     }
 });
 
