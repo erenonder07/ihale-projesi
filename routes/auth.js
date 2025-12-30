@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs"); // dosya silmek
+const fs = require("fs"); // dosya silme
 
 
 const User = require("../models/user"); 
@@ -94,7 +94,7 @@ router.get("/duzenle/:id", async function(req, res) {
     }
 });
 
-// B. GÜNCELLEME İŞLEMİ 
+//  GÜNCELLEME İŞLEMİ 
 router.post("/duzenle/:id", upload.single("image"), async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
     
@@ -116,7 +116,7 @@ router.post("/duzenle/:id", upload.single("image"), async function(req, res) {
                         fs.unlinkSync(eskiResimYolu);
                     }
                 }
-                // 2. Veritabanına yeni resim adını kaydet
+                //  Veritabanına yeni resim adını kaydet
                 tender.image_url = req.file.filename;
             }
 
@@ -137,7 +137,7 @@ router.post("/duzenle/:id", upload.single("image"), async function(req, res) {
     }
 });
 
-// C. SİLME İŞLEMİ
+//  SİLME İŞLEMİ
 router.post("/sil/:id", async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
     

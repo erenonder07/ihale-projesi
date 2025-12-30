@@ -179,7 +179,7 @@ router.get("/my-tenders", async function(req, res) {
                 { model: Bid, include: [{ model: User }] },
                 { model: Category }
             ],
-            order: [['tender_id', 'DESC']]     //sıralama "azalana göre"
+            order: [['tender_id', 'DESC']]     //sıralama "saate göre"
         });
         
         // Kullanıcıyı veritabanından çekip gönderiyoruz

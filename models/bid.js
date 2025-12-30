@@ -12,7 +12,7 @@ const Bid = sequelize.define('Bids', {
 
     amount: {
         type: DataTypes.DECIMAL(10, 2),  //10basamak-2ondalık
-        allowNull: false    // bos geçilemez
+        allowNull: false    
     }
 });
 

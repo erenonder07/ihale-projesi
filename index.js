@@ -29,19 +29,19 @@ app.use("/static", express.static(path.join(__dirname, "public")));            /
 
 
 
-// 1. Kullanıcı - İhale İlişkisi
+//  kullanıcı - ihale İlişkisi
 User.hasMany(Tender, { foreignKey: 'Users_user_id', onDelete: "CASCADE" });           //bir kullanıcının
 Tender.belongsTo(User, { foreignKey: 'Users_user_id' });                              //birden fazla ihalesi olabilir
 
-// 2. Kullanıcı - Teklif İlişkisi
+//  kullanıcı - teklif İlişkisi
 User.hasMany(Bid, { foreignKey: 'Users_user_id', onDelete: "CASCADE" });               //bir kullanıcının
 Bid.belongsTo(User, { foreignKey: 'Users_user_id' });                            //birden fazla teklifi olabilir                        
 
-// 3. İhale - Teklif İlişkisi
+//  ihale - teklif 
 Tender.hasMany(Bid, { foreignKey: 'Tenders_tender_id', onDelete: "CASCADE" });      //bir ihalenin
 Bid.belongsTo(Tender, { foreignKey: 'Tenders_tender_id' });                         //birden fazla teklifi olabilir 
 
-// 4. Kategori - İhale İlişkisi
+//  kategori - ihale 
 Category.hasMany(Tender, { 
     foreignKey: 'Categories_category_id', 
     onDelete: "SET NULL"                                                            //ilan silindiğinde kategori boş olur
