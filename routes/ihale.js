@@ -4,7 +4,7 @@ const { Op } = require("sequelize");
 
 // MODELLER
 const Tender = require("../models/tender");
-const User = require("../models/user"); //
+const User = require("../models/user"); 
 const Bid = require("../models/bid");
 const Category = require("../models/category"); 
 
@@ -18,20 +18,18 @@ router.get("/dashboard", async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
     
     try {
-        
         const user = await User.findByPk(req.session.user_id);
 
         if (user) {
             res.render("dashboard", { 
                 user: {
                     user_id: user.user_id,
-                    ad_soyad: user.full_name, // 
-                    email: user.email,        //            DB'DEN CEKTİGİMİZ  BİLGİLER
-                    phone: user.phone         //
+                    ad_soyad: user.full_name, 
+                    email: user.email,        
+                    phone: user.phone         
                 }
             });
         } else {
-            
             res.redirect("/logout");
         }
     } catch (err) {
@@ -50,7 +48,7 @@ router.get("/yeni-ilan", async function(req, res) {
 });
 
 // -----------------------------------------------------------
-//  ANASAYFA
+//  ANASAYFA 
 
 router.get("/", async function(req, res) {            
     if (!req.session.user_id) return res.redirect("/login");
@@ -60,20 +58,21 @@ router.get("/", async function(req, res) {
         const kategoriId = req.query.kategori;
         
         const categories = await Category.findAll();
-        // Anasayfada da kullanıcı adının görünmesi için veriyi çekiyoruz
         const currentUser = await User.findByPk(req.session.user_id);
 
         let whereKosulu = {}; 
         const now = new Date(); 
-
-        if (durum === 'aktif') {                                    //
-            whereKosulu.end_date = { [Op.gt]: now };            
-            whereKosulu.status = 1; 
-        } else if (durum === 'kapali')   {                 //       //ilan-aktif/kapali durumu
+        
+        // Eğer kullanıcı "Biten" sekmesine tıkladıysa:
+        if (durum === 'kapali') {                 
             whereKosulu[Op.or] = [
-                { end_date: { [Op.lt]: now } },
-                { status: 0 }
+                { end_date: { [Op.lt]: now } }, // Süresi bitmiş olanlar
+                { status: 0 }                   // Veya manuel kapatılanlar
             ];
+        } 
+        else {
+            whereKosulu.end_date = { [Op.gt]: now }; 
+            whereKosulu.status = 1;                  
         }
 
         if (kategoriId && kategoriId !== 'hepsi') {
@@ -90,7 +89,7 @@ router.get("/", async function(req, res) {
         });
 
         const islenmisIhaleler = tenders.map(tender => {
-            const ihaleObj = tender.toJSON();                               //ihalede en_yuksek_teklif
+            const ihaleObj = tender.toJSON();                               
             if (ihaleObj.Bids && ihaleObj.Bids.length > 0) {             
                 ihaleObj.en_yuksek_teklif = Math.max(...ihaleObj.Bids.map(b => parseFloat(b.amount)));
             } else {
@@ -103,7 +102,6 @@ router.get("/", async function(req, res) {
             ihaleler: islenmisIhaleler,
             categories: categories,
             user: {
-                // Anasayfa menüsü için gerekli bilgiler
                 ad_soyad: currentUser ? currentUser.full_name : "Misafir",
                 email: currentUser ? currentUser.email : "",
                 phone: currentUser ? currentUser.phone : ""
@@ -123,7 +121,7 @@ router.get("/", async function(req, res) {
 // İHALE EKLEME
 
 router.post("/add-tender", upload.single("resim"), async function(req, res) { 
-    if (!req.session.user_id) return res.redirect("/login");    //kimlik sorgusu
+    if (!req.session.user_id) return res.redirect("/login");    
 
     try {
         await Tender.create({
@@ -157,7 +155,7 @@ router.post("/bid", async function(req, res) {
 
         await Bid.create({
             amount: req.body.amount,
-            Users_user_id: req.session.user_id,             //kaydetme
+            Users_user_id: req.session.user_id,             
             Tenders_tender_id: req.body.tender_id
         });
         res.redirect("/");
@@ -168,7 +166,7 @@ router.post("/bid", async function(req, res) {
 });
 
 
-//  İLANLARIM'M
+//  İLANLARIM
 
 router.get("/my-tenders", async function(req, res) {
     if (!req.session.user_id) return res.redirect("/login");
@@ -179,13 +177,12 @@ router.get("/my-tenders", async function(req, res) {
                 { model: Bid, include: [{ model: User }] },
                 { model: Category }
             ],
-            order: [['tender_id', 'DESC']]     //sıralama "saate göre"
+            order: [['tender_id', 'DESC']]     
         });
         
-        // Kullanıcıyı veritabanından çekip gönderiyoruz
         const user = await User.findByPk(req.session.user_id);
 
-        res.render("my-tenders", {    //ejs
+        res.render("my-tenders", {    
             tenders: myTenders, 
             user: {
                 ad_soyad: user ? user.full_name : "Kullanıcı"
