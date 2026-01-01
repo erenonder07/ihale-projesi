@@ -12,14 +12,13 @@ const sequelize = new Sequelize(
     dialectOptions: {
       ssl: {
         require: true,
-        rejectUnauthorized: false // Aiven 
+        rejectUnauthorized: false
       },
-      // Tarihlerin string olarak değil, doğru saat dilimiyle gelmesi için ek önlem:
-      dateStrings: true,
+      dateStrings: true, // Tarihleri doğru formatta tutar
       typeCast: true
     },
     define: {
-      timestamps: false // tarih
+      timestamps: false
     }
   }
 );
