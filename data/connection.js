@@ -8,12 +8,12 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST, 
     port: process.env.DB_PORT, 
     dialect: 'mysql',
-    timezone: '+03:00', 
+    timezone: '+03:00', // Türkiye saati (MySQL oturumu için)
     logging: false,
     dialectOptions: {
       ssl: {
-        require: true,
-        rejectUnauthorized: false
+        require: true,            // Aiven için zorunlu güvenlik ayarı
+        rejectUnauthorized: false 
       },
       dateStrings: true, 
       typeCast: true
