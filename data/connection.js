@@ -8,15 +8,14 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST, 
     port: process.env.DB_PORT, 
     dialect: 'mysql',
-    timezone: '+03:00', // MySQL sunucu saatini Türkiye'ye ayarlar
     logging: false,
     dialectOptions: {
       ssl: {
         require: true,
         rejectUnauthorized: false
       },
-      dateStrings: true, 
-      typeCast: true     // Veriyi olduğu gibi oku
+      dateStrings: true, // Tarihi olduğu gibi (string) al
+      typeCast: true     // Değiştirme yapma
     },
     define: {
       timestamps: false
