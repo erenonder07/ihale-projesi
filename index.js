@@ -1,3 +1,4 @@
+process.env.TZ = 'Europe/Istanbul'; 
 const express = require("express");
 const app = express();
 const path = require("path");
