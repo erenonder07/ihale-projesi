@@ -14,8 +14,6 @@ const sequelize = new Sequelize(
         require: true,
         rejectUnauthorized: false
       },
-      dateStrings: true, // Tarihleri doğru formatta tutar
-      typeCast: true
     },
     define: {
       timestamps: false
